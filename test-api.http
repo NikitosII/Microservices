@@ -1,0 +1,106 @@
+### Gateway Health Check
+GET http://localhost:5000/health
+
+### Identity API - Register
+POST http://localhost:5001/api/account/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123!",
+  "confirmPassword": "Password123!"
+}
+
+### Identity API - Login
+POST http://localhost:5001/api/account/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123!"
+}
+
+### Product API - Get All Products
+GET http://localhost:5002/api/products
+
+### Product API - Get Product by ID
+GET http://localhost:5002/api/products/1
+
+### Product API - Create Product
+POST http://localhost:5002/api/products
+Content-Type: application/json
+
+{
+  "name": "Sample Product",
+  "description": "Product Description",
+  "price": 99.99,
+  "stock": 100
+}
+
+### Coupon API - Get All Coupons
+GET http://localhost:5003/api/coupons
+
+### Coupon API - Get Coupon by Code
+GET http://localhost:5003/api/coupons/SUMMER2024
+
+### Coupon API - Validate Coupon
+POST http://localhost:5003/api/coupons/validate
+Content-Type: application/json
+
+{
+  "couponCode": "SUMMER2024",
+  "totalAmount": 100.00
+}
+
+### Shopping Cart API - Get Cart
+GET http://localhost:5004/api/cart/user123
+
+### Shopping Cart API - Add to Cart
+POST http://localhost:5004/api/cart
+Content-Type: application/json
+
+{
+  "userId": "user123",
+  "productId": 1,
+  "quantity": 2
+}
+
+### Order API - Get All Orders
+GET http://localhost:5005/api/orders
+
+### Order API - Create Order
+POST http://localhost:5005/api/orders
+Content-Type: application/json
+
+{
+  "userId": "user123",
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 2,
+      "price": 99.99
+    }
+  ],
+  "couponCode": "SUMMER2024"
+}
+
+### Email API - Send Email
+POST http://localhost:5006/api/email
+Content-Type: application/json
+
+{
+  "to": "user@example.com",
+  "subject": "Test Email",
+  "body": "This is a test email"
+}
+
+### Payment API - Process Payment
+POST http://localhost:5007/api/payments
+Content-Type: application/json
+
+{
+  "orderId": "order123",
+  "amount": 199.98,
+  "paymentMethod": "CreditCard",
+  "cardNumber": "4111111111111111"
+}

@@ -1,0 +1,160 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Passw0rd
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - microservices-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - microservices-network
+
+  gateway.api:
+    build:
+      context: .
+      dockerfile: src/Gateway/Gateway.API/Dockerfile
+    container_name: gateway.api
+    ports:
+      - "5000:80"
+    depends_on:
+      - identity.api
+      - product.api
+      - coupon.api
+      - shoppingcart.api
+      - order.api
+    networks:
+      - microservices-network
+
+  identity.api:
+    build:
+      context: .
+      dockerfile: src/Identity/Identity.API/Dockerfile
+    container_name: identity.api
+    ports:
+      - "5001:80"
+    depends_on:
+      - sqlserver
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=IdentityDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
+    networks:
+      - microservices-network
+
+  product.api:
+    build:
+      context: .
+      dockerfile: src/Microservices/Product.API/Dockerfile
+    container_name: product.api
+    ports:
+      - "5002:80"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=ProductDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
+      - EventBusSettings__HostName=rabbitmq
+    networks:
+      - microservices-network
+
+  coupon.api:
+    build:
+      context: .
+      dockerfile: src/Microservices/Coupon.API/Dockerfile
+    container_name: coupon.api
+    ports:
+      - "5003:80"
+    depends_on:
+      - sqlserver
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=CouponDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
+    networks:
+      - microservices-network
+
+  shoppingcart.api:
+    build:
+      context: .
+      dockerfile: src/Microservices/ShoppingCart.API/Dockerfile
+    container_name: shoppingcart.api
+    ports:
+      - "5004:80"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=ShoppingCartDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
+      - EventBusSettings__HostName=rabbitmq
+    networks:
+      - microservices-network
+
+  order.api:
+    build:
+      context: .
+      dockerfile: src/Microservices/Order.API/Dockerfile
+    container_name: order.api
+    ports:
+      - "5005:80"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=OrderDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
+      - EventBusSettings__HostName=rabbitmq
+    networks:
+      - microservices-network
+
+  email.api:
+    build:
+      context: .
+      dockerfile: src/Microservices/Email.API/Dockerfile
+    container_name: email.api
+    ports:
+      - "5006:80"
+    depends_on:
+      - rabbitmq
+    environment:
+      - EventBusSettings__HostName=rabbitmq
+    networks:
+      - microservices-network
+
+  payment.api:
+    build:
+      context: .
+      dockerfile: src/Microservices/Payment.API/Dockerfile
+    container_name: payment.api
+    ports:
+      - "5007:80"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=PaymentDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
+      - EventBusSettings__HostName=rabbitmq
+    networks:
+      - microservices-network
+
+volumes:
+  sqlserver_data:
+  rabbitmq_data:
+
+networks:
+  microservices-network:
+    driver: bridge
