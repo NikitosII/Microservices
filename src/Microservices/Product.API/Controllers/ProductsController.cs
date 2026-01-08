@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Product.API.Data;
 using Product.API.Models;
-using Product.API.Services;
 
 namespace Product.API.Controllers
 {

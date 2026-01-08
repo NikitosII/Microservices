@@ -85,8 +85,8 @@ namespace Coupon.API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error validating coupon");
-                return StatusCode(500, "Internal server error");
+                _logger.LogError($"{ex.Message}");
+                return StatusCode(500); 
             }
         }
 
@@ -115,8 +115,9 @@ namespace Coupon.API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error using coupon");
-                return StatusCode(500, "Internal server error");
+                _logger.LogError($"{ex.Message}");
+                return StatusCode(500);
+
             }
         }
 
@@ -132,8 +133,8 @@ namespace Coupon.API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting coupons");
-                return StatusCode(500, "Internal server error");
+                _logger.LogError($"{ex.Message}");
+                return StatusCode(500);
             }
         }
 
@@ -166,8 +167,8 @@ namespace Coupon.API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating coupon");
-                return StatusCode(500, "Internal server error");
+                _logger.LogError($"{ex.Message}");
+                return StatusCode(500);
             }
         }
 
@@ -187,8 +188,8 @@ namespace Coupon.API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting coupon with id {CouponId}", id);
-                return StatusCode(500, "Internal server error");
+                _logger.LogError($"{ex.Message}");
+                return StatusCode(500);
             }
         }
     }

@@ -1,53 +1,55 @@
-using System.Text;
+using Duende.IdentityServer;
 using Identity.API.Data;
 using Identity.API.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("IdentityDB")));
 
 // Add Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// Configure JWT
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["SecretKey"] ?? "YourSuperSecretKeyThatShouldBeAtLeast32CharactersLong!";
-
-builder.Services.AddAuthentication(options =>
+// Add IdentityServer
+var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.Events.RaiseErrorEvents = true;
+    options.Events.RaiseInformationEvents = true;
+    options.Events.RaiseFailureEvents = true;
+    options.Events.RaiseSuccessEvents = true;
+    options.EmitStaticAudienceClaim = true;
 })
-.AddJwtBearer(options =>
+    .AddInMemoryIdentityResources(Config.IdentityResources)
+    .AddInMemoryApiScopes(Config.ApiScopes)
+    .AddInMemoryClients(Config.Clients)
+    .AddAspNetIdentity<ApplicationUser>();
+
+identityServerBuilder.AddDeveloperSigningCredential();
+
+// Add CORS
+builder.Services.AddCors(options =>
 {
-    options.TokenValidationParameters = new TokenValidationParameters
+    options.AddPolicy("AllowAll", builder =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"] ?? "MicroservicesECommerce",
-        ValidAudience = jwtSettings["Audience"] ?? "MicroservicesECommerce",
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
-    };
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -55,8 +57,16 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAuthentication();
+app.UseCors("AllowAll");
+app.UseIdentityServer();
 app.UseAuthorization();
 app.MapControllers();
+
+// Ensure database is created
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.EnsureCreated();
+}
 
 app.Run();
