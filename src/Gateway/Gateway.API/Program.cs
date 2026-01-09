@@ -11,7 +11,7 @@ builder.Services.AddSwaggerGen();
 // Add Ocelot
 builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
 builder.Services.AddOcelot(builder.Configuration)
-    .AddPolly()
+    .AddPoly()
     .AddCacheManager(x => x.WithDictionaryHandle());
 
 // Add CORS
