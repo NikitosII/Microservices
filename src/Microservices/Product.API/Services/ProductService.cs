@@ -102,7 +102,7 @@ namespace Product.API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating product {ProductId}", id);
+                _logger.LogError(ex, "Error updating {ProductId}", id);
                 throw;
             }
         }
@@ -127,7 +127,7 @@ namespace Product.API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting product {ProductId}", id);
+                _logger.LogError(ex, "Error deleting {ProductId}", id);
                 throw;
             }
         }
@@ -153,7 +153,7 @@ namespace Product.API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating product {ProductId}", productId);
+                _logger.LogError(ex, "Error updating {ProductId}", productId);
                 throw;
             }
         }
