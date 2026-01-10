@@ -1,3 +1,5 @@
+using EventBus.Events;
+
 namespace Order.API.Events
 {
     public class OrderCreatedEvent : IntegrationEvent

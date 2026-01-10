@@ -1,4 +1,5 @@
 using EventBus.Extensions;
+using MassTransit;
 using Order.API.EventHandlers;
 
 var builder = WebApplication.CreateBuilder(args);

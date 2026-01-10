@@ -1,6 +1,6 @@
 namespace Order.API.Models
 {
-    public class Order
+    public class Orders
     {
         public enum OrderStatus
         {
