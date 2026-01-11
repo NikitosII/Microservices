@@ -17,7 +17,7 @@ namespace Payment.API.Models
         Refunded
     }
 
-    public class Payment
+    public class Payments
     {
         public Guid Id { get; set; }
         public Guid OrderId { get; set; }
