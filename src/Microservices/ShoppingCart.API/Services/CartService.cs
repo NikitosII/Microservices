@@ -4,8 +4,16 @@ using ShoppingCart.API.Models;
 
 namespace ShoppingCart.API.Services
 {
+    public interface ICartService
+    {
+        Task<Cart> GetCartAsync(Guid userId);
+        Task<Cart> AddToCartAsync(Guid userId, AddToCartRequest request);
+        Task<Cart> UpdateCartItemAsync(Guid userId, Guid itemId, UpdateCartRequest request);
+        Task<Cart> RemoveFromCartAsync(Guid userId, Guid itemId);
+        Task ClearCartAsync(Guid userId);
+    }
 
-    public class CartService 
+    public class CartService : ICartService
     {
         private readonly CartContext _context;
         private readonly IHttpClientFactory _httpClientFactory;

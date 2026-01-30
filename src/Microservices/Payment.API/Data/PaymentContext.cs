@@ -1,5 +1,3 @@
-
-
 using Microsoft.EntityFrameworkCore;
 using Payment.API.Models;
 
