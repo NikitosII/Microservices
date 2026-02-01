@@ -121,20 +121,6 @@ services:
     networks:
       - microservices-network
 
-  email.api:
-    build:
-      context: .
-      dockerfile: src/Microservices/Email.API/Dockerfile
-    container_name: email.api
-    ports:
-      - "5006:80"
-    depends_on:
-      - rabbitmq
-    environment:
-      - EventBusSettings__HostName=rabbitmq
-    networks:
-      - microservices-network
-
   payment.api:
     build:
       context: .

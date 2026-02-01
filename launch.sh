@@ -9,7 +9,6 @@ services=(
     "src/Microservices/Coupon.API"
     "src/Microservices/ShoppingCart.API"
     "src/Microservices/Order.API"
-    "src/Microservices/Email.API"
     "src/Microservices/Payment.API"
     "src/Gateway/Gateway.API"
 )
