@@ -152,8 +152,7 @@ namespace ShoppingCart.API.Services
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient();
-                httpClient.BaseAddress = new Uri("http://product.api:5001");
+                var httpClient = _httpClientFactory.CreateClient("ProductApi");
 
                 var response = await httpClient.GetAsync($"/api/products/{productId}");
 

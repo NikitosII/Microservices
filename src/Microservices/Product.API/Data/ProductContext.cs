@@ -9,7 +9,7 @@ namespace Product.API.Data
         {
         }
 
-        public DbSet<Products> Products { get; set; }
+        public DbSet<Products> Entities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

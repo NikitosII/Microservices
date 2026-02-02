@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Order.API.Models;
 using Order.API.Services;
 
-namespace Order.API.Controllers 
+namespace Order.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -39,10 +39,15 @@ namespace Order.API.Controllers
                 var orders = await _orderService.GetOrdersByUserIdAsync(userId);
                 return Ok(orders);
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex, "Unauthorized access attempt to get orders");
+                return Unauthorized();
+            }
             catch (Exception ex)
             {
-                _logger.LogError($"{ex.Message}");
-                return StatusCode(500);
+                _logger.LogError(ex, "Error retrieving orders");
+                return StatusCode(500, "An error occurred while retrieving orders");
             }
         }
 
@@ -61,10 +66,15 @@ namespace Order.API.Controllers
 
                 return Ok(order);
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex, "Unauthorized access attempt to get order {OrderId}", id);
+                return Unauthorized();
+            }
             catch (Exception ex)
             {
-                _logger.LogError($"{ex.Message}");
-                return StatusCode(500);
+                _logger.LogError(ex, "Error retrieving order with ID {OrderId}", id);
+                return StatusCode(500, "An error occurred while retrieving the order");
             }
         }
 
@@ -81,20 +91,28 @@ namespace Order.API.Controllers
                 var userId = GetUserId();
                 var order = await _orderService.CreateOrderAsync(userId, request);
 
+                _logger.LogInformation("Order created with ID {OrderId} for user {UserId}", order.Id, userId);
                 return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex, "Unauthorized access attempt to create order");
+                return Unauthorized();
             }
             catch (ArgumentException ex)
             {
+                _logger.LogWarning(ex, "Invalid argument when creating order");
                 return BadRequest(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
+                _logger.LogWarning(ex, "Invalid operation when creating order");
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{ex.Message}");
-                return StatusCode(500);
+                _logger.LogError(ex, "Error creating order");
+                return StatusCode(500, "An error occurred while creating the order");
             }
         }
 
@@ -111,12 +129,13 @@ namespace Order.API.Controllers
                     return NotFound();
                 }
 
+                _logger.LogInformation("Order {OrderId} status updated to {Status}", id, request.Status);
                 return NoContent();
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{ex.Message}");
-                return StatusCode(500);
+                _logger.LogError(ex, "Error updating order status for order {OrderId}", id);
+                return StatusCode(500, "An error occurred while updating the order status");
             }
         }
 
@@ -135,10 +154,15 @@ namespace Order.API.Controllers
 
                 return Ok(order);
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex, "Unauthorized access attempt to get order by number {OrderNumber}", orderNumber);
+                return Unauthorized();
+            }
             catch (Exception ex)
             {
-                _logger.LogError($"{ex.Message}");
-                return StatusCode(500);
+                _logger.LogError(ex, "Error retrieving order by number {OrderNumber}", orderNumber);
+                return StatusCode(500, "An error occurred while retrieving the order");
             }
         }
 
@@ -155,19 +179,25 @@ namespace Order.API.Controllers
                     return BadRequest("Cannot cancel order in its current state");
                 }
 
+                _logger.LogInformation("Order {OrderId} cancelled by user {UserId}", id, userId);
                 return NoContent();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex, "Unauthorized access attempt to cancel order {OrderId}", id);
+                return Unauthorized();
             }
             catch (ArgumentException ex)
             {
+                _logger.LogWarning(ex, "Invalid argument when cancelling order {OrderId}", id);
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{ex.Message}");
-                return StatusCode(500);
+                _logger.LogError(ex, "Error cancelling order {OrderId}", id);
+                return StatusCode(500, "An error occurred while cancelling the order");
             }
         }
-
     }
 
     public class UpdateOrderStatusRequest

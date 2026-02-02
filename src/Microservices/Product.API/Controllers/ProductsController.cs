@@ -26,15 +26,15 @@ namespace Product.API.Controllers
         {
             try
             {
-                var products = await _context.Products
-                    .Where(x => x.IsActive)
+                var products = await _context.Entities
+                    .Where(p => p.IsActive)
                     .ToListAsync();
                 return Ok(products);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{ex.Message}");
-                return StatusCode(500);
+                _logger.LogError(ex, "Error retrieving products");
+                return StatusCode(500, "An error occurred while retrieving products");
             }
         }
 
@@ -44,7 +44,7 @@ namespace Product.API.Controllers
         {
             try
             {
-                var product = await _context.Products.FindAsync(id);
+                var product = await _context.Entities.FindAsync(id);
                 if (product == null || !product.IsActive)
                 {
                     return NotFound();
@@ -53,69 +53,73 @@ namespace Product.API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{ex.Message}");
-                return StatusCode(500);
+                _logger.LogError(ex, "Error retrieving product with ID {ProductId}", id);
+                return StatusCode(500, "An error occurred while retrieving the product");
             }
         }
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<Products>> CreateProduct(ProductCreateDto product)
+        public async Task<ActionResult<Products>> CreateProduct(ProductCreateDto dto)
         {
             try
             {
-                var thing = new Products
+                var product = new Products
                 {
                     Id = Guid.NewGuid(),
-                    Name = product.Name,
-                    Description = product.Description,
-                    Price = product.Price,
-                    Stock = product.Stock,
-                    Category = product.Category,
-                    ImageUrl = product.ImageUrl,
-                    CreatedAt = DateTime.Now,
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    Price = dto.Price,
+                    Stock = dto.Stock,
+                    Category = dto.Category,
+                    ImageUrl = dto.ImageUrl,
+                    CreatedAt = DateTime.UtcNow,
                     IsActive = true
                 };
-                _context.Products.Add(thing);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetProduct), new { id = thing.Id }, thing);
 
+                _context.Entities.Add(product);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Product created with ID {ProductId}", product.Id);
+                return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error: {ex.Message}");
-                return StatusCode(500);
+                _logger.LogError(ex, "Error creating product");
+                return StatusCode(500, "An error occurred while creating the product");
             }
         }
 
-        [HttpPut("id")]
+        [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateProduct(Guid id, ProductUpdateDto product)
+        public async Task<IActionResult> UpdateProduct(Guid id, ProductUpdateDto dto)
         {
             try
             {
-                var thing = await _context.Products.FindAsync(id);
-                if (thing == null)
+                var product = await _context.Entities.FindAsync(id);
+                if (product == null)
                 {
                     return NotFound();
                 }
 
-                thing.Name = product.Name;
-                thing.Description = product.Description;
-                thing.Price = product.Price;
-                thing.Stock = product.Stock;
-                thing.Category = product.Category;
-                thing.ImageUrl = product.ImageUrl;
-                thing.CreatedAt = DateTime.Now;
-                thing.IsActive = product.IsActive;
+                product.Name = dto.Name;
+                product.Description = dto.Description;
+                product.Price = dto.Price;
+                product.Stock = dto.Stock;
+                product.Category = dto.Category;
+                product.ImageUrl = dto.ImageUrl;
+                product.UpdatedAt = DateTime.UtcNow;
+                product.IsActive = dto.IsActive;
 
                 await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Product updated with ID {ProductId}", id);
                 return NoContent();
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error: {ex.Message}");
-                return StatusCode(500);
+                _logger.LogError(ex, "Error updating product with ID {ProductId}", id);
+                return StatusCode(500, "An error occurred while updating the product");
             }
         }
 
@@ -125,23 +129,25 @@ namespace Product.API.Controllers
         {
             try
             {
-                var thing = await _context.Products.FindAsync(id);
-                if (thing == null)
+                var product = await _context.Entities.FindAsync(id);
+                if (product == null)
                 {
                     return NotFound();
                 }
-                thing.IsActive = false;
-                thing.UpdatedAt = DateTime.Now;
+
+                product.IsActive = false;
+                product.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Product soft-deleted with ID {ProductId}", id);
                 return NoContent();
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error: {ex.Message}");
-                return StatusCode(500);
+                _logger.LogError(ex, "Error deleting product with ID {ProductId}", id);
+                return StatusCode(500, "An error occurred while deleting the product");
             }
-
         }
 
         [HttpGet("category/{category}")]
@@ -150,19 +156,16 @@ namespace Product.API.Controllers
         {
             try
             {
-                var thing = await _context.Products
-                    .Where(x => x.Category == category && x.IsActive)
+                var products = await _context.Entities
+                    .Where(p => p.Category == category && p.IsActive)
                     .ToListAsync();
-                return Ok(thing);
+                return Ok(products);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error: {ex.Message}");
-                return StatusCode(500);
+                _logger.LogError(ex, "Error retrieving products for category {Category}", category);
+                return StatusCode(500, "An error occurred while retrieving products");
             }
         }
     }
-
 }
-
-

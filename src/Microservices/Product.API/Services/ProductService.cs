@@ -20,7 +20,7 @@ namespace Product.API.Services
         {
             try
             {
-                return await _context.Products
+                return await _context.Entities
                     .Where(p => p.IsActive)
                     .OrderBy(p => p.Name)
                     .ToListAsync();
@@ -36,7 +36,7 @@ namespace Product.API.Services
         {
             try
             {
-                return await _context.Products
+                return await _context.Entities
                     .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
             }
             catch (Exception ex)
@@ -63,7 +63,7 @@ namespace Product.API.Services
                     IsActive = true
                 };
 
-                _context.Products.Add(product);
+                _context.Entities.Add(product);
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation("Product created: {ProductId}", product.Id);
@@ -80,7 +80,7 @@ namespace Product.API.Services
         {
             try
             {
-                var product = await _context.Products.FindAsync(id);
+                var product = await _context.Entities.FindAsync(id);
                 if (product == null)
                 {
                     return null;
@@ -111,7 +111,7 @@ namespace Product.API.Services
         {
             try
             {
-                var product = await _context.Products.FindAsync(id);
+                var product = await _context.Entities.FindAsync(id);
                 if (product == null)
                 {
                     return false;
@@ -136,7 +136,7 @@ namespace Product.API.Services
         {
             try
             {
-                var product = await _context.Products.FindAsync(productId);
+                var product = await _context.Entities.FindAsync(productId);
                 if (product == null)
                 {
                     return false;
@@ -162,7 +162,7 @@ namespace Product.API.Services
         {
             try
             {
-                return await _context.Products
+                return await _context.Entities
                     .Where(p => p.Category == category && p.IsActive)
                     .OrderBy(p => p.Name)
                     .ToListAsync();
@@ -176,7 +176,7 @@ namespace Product.API.Services
 
         public async Task<bool> ProductExistsAsync(Guid id)
         {
-            return await _context.Products.AnyAsync(p => p.Id == id && p.IsActive);
+            return await _context.Entities.AnyAsync(p => p.Id == id && p.IsActive);
         }
     }
 }

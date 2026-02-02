@@ -21,16 +21,15 @@ namespace Order.API.Services
     {
         private readonly OrderContext _context;
         private readonly ILogger<OrderService> _logger;
-        private readonly IConfiguration _configuration; 
         private readonly IHttpClientFactory _httpClient;
         private readonly IPublishEndpoint _publishEndpoint;
 
-
         public OrderService(
-            OrderContext context, ILogger<OrderService> logger,
-            IConfiguration configuration, IHttpClientFactory httpClient, IPublishEndpoint publishEndpoint)      
+            OrderContext context,
+            ILogger<OrderService> logger,
+            IHttpClientFactory httpClient,
+            IPublishEndpoint publishEndpoint)
         {
-            _configuration = configuration;
             _context = context;
             _logger = logger;
             _httpClient = httpClient;
@@ -41,8 +40,7 @@ namespace Order.API.Services
         {
             try
             {
-                var httpClient = _httpClient.CreateClient();
-                httpClient.BaseAddress = new Uri(_configuration["ShoppingCartApi:BaseUrl"]);
+                var httpClient = _httpClient.CreateClient("ShoppingCartApi");
 
                 var response = await httpClient.GetAsync($"api/cart?userId={userId}");
 
@@ -64,8 +62,7 @@ namespace Order.API.Services
         {
             try
             {
-                var httpClient = _httpClient.CreateClient();
-                httpClient.BaseAddress = new Uri(_configuration["ShoppingCartApi:BaseUrl"]);
+                var httpClient = _httpClient.CreateClient("ShoppingCartApi");
 
                 await httpClient.DeleteAsync($"api/cart?userId={userId}");
             }
@@ -78,12 +75,10 @@ namespace Order.API.Services
 
         private async Task ValidateAndUpdateProductStockAsync(List<ShoppingCart.API.Models.CartItem> cartItems)
         {
+            var httpClient = _httpClient.CreateClient("ProductApi");
+
             foreach (var item in cartItems)
             {
-                // Call Product API to check stock and update
-                var httpClient = _httpClient.CreateClient();
-                httpClient.BaseAddress = new Uri(_configuration["ProductApi:BaseUrl"]);
-
                 var response = await httpClient.PutAsJsonAsync(
                     $"api/products/{item.ProductId}/stock",
                     new { Quantity = -item.Quantity }); // Negative to reduce stock
@@ -97,12 +92,10 @@ namespace Order.API.Services
 
         private async Task ReturnProductStockAsync(List<OrderItem> orderItems)
         {
+            var httpClient = _httpClient.CreateClient("ProductApi");
+
             foreach (var item in orderItems)
             {
-                // Call Product API to return stock
-                var httpClient = _httpClient.CreateClient();
-                httpClient.BaseAddress = new Uri(_configuration["ProductApi:BaseUrl"]);
-
                 await httpClient.PutAsJsonAsync(
                     $"api/products/{item.ProductId}/stock",
                     new { Quantity = item.Quantity }); // Positive to return stock
@@ -113,8 +106,7 @@ namespace Order.API.Services
         {
             try
             {
-                var httpClient = _httpClient.CreateClient();
-                httpClient.BaseAddress = new Uri(_configuration["CouponApi:BaseUrl"]);
+                var httpClient = _httpClient.CreateClient("CouponApi");
 
                 var response = await httpClient.PostAsJsonAsync(
                     "api/coupons/validate",
@@ -138,8 +130,7 @@ namespace Order.API.Services
         {
             try
             {
-                var httpClient = _httpClient.CreateClient();
-                httpClient.BaseAddress = new Uri(_configuration["CouponApi:BaseUrl"]);
+                var httpClient = _httpClient.CreateClient("CouponApi");
 
                 await httpClient.PostAsync($"api/coupons/{couponId}/use", null);
             }
@@ -170,13 +161,13 @@ namespace Order.API.Services
             await _publishEndpoint.Publish(orderCreatedEvent);
         }
 
-        private async Task PublishOrderStatusUpdatedEvent(Orders order)
+        private async Task PublishOrderStatusUpdatedEvent(Orders order, Orders.OrderStatus oldStatus)
         {
             var orderStatusUpdatedEvent = new OrderStatusUpdatedEvent
             {
                 OrderId = order.Id,
                 UserId = order.UserId,
-                OldStatus = order.Status.ToString(),
+                OldStatus = oldStatus.ToString(),
                 NewStatus = order.Status.ToString(),
                 UpdatedAt = DateTime.UtcNow
             };
@@ -376,13 +367,14 @@ namespace Order.API.Services
                     return false;
                 }
 
+                var oldStatus = order.Status;
                 order.Status = status;
                 order.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 
                 // Publish order status updated event
-                await PublishOrderStatusUpdatedEvent(order);
+                await PublishOrderStatusUpdatedEvent(order, oldStatus);
 
                 _logger.LogInformation("Order status updated: {OrderId} -> {Status}", orderId, status);
                 return true;
