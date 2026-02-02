@@ -1,19 +1,25 @@
 version: '3.8'
 
 services:
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sqlserver
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
     environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=YourStrong@Passw0rd
-      - MSSQL_PID=Developer
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_MULTIPLE_DATABASES=IdentityDb,ProductDb,CouponDb,ShoppingCartDb,OrderDb,PaymentDb
     ports:
-      - "1433:1433"
+      - "5432:5432"
     volumes:
-      - sqlserver_data:/var/opt/mssql
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh
     networks:
       - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -28,6 +34,11 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - microservices-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   gateway.api:
     build:
@@ -36,6 +47,10 @@ services:
     container_name: gateway.api
     ports:
       - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Identity__Authority=http://identity.api:80
+      - Identity__Audience=gateway.api
     depends_on:
       - identity.api
       - product.api
@@ -52,10 +67,12 @@ services:
     container_name: identity.api
     ports:
       - "5001:80"
-    depends_on:
-      - sqlserver
     environment:
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=IdentityDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__IdentityDB=Host=postgres;Port=5432;Database=IdentityDb;Username=postgres;Password=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - microservices-network
 
@@ -66,12 +83,18 @@ services:
     container_name: product.api
     ports:
       - "5002:80"
-    depends_on:
-      - sqlserver
-      - rabbitmq
     environment:
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=ProductDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
-      - EventBusSettings__HostName=rabbitmq
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__ProductDB=Host=postgres;Port=5432;Database=ProductDb;Username=postgres;Password=postgres
+      - Identity__Authority=http://identity.api:80
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - microservices-network
 
@@ -82,10 +105,13 @@ services:
     container_name: coupon.api
     ports:
       - "5003:80"
-    depends_on:
-      - sqlserver
     environment:
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=CouponDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__CouponDB=Host=postgres;Port=5432;Database=CouponDb;Username=postgres;Password=postgres
+      - Identity__Authority=http://identity.api:80
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - microservices-network
 
@@ -96,12 +122,19 @@ services:
     container_name: shoppingcart.api
     ports:
       - "5004:80"
-    depends_on:
-      - sqlserver
-      - rabbitmq
     environment:
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=ShoppingCartDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
-      - EventBusSettings__HostName=rabbitmq
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__ShoppingCartDB=Host=postgres;Port=5432;Database=ShoppingCartDb;Username=postgres;Password=postgres
+      - Identity__Authority=http://identity.api:80
+      - ProductApi__BaseUrl=http://product.api:80
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - microservices-network
 
@@ -112,12 +145,21 @@ services:
     container_name: order.api
     ports:
       - "5005:80"
-    depends_on:
-      - sqlserver
-      - rabbitmq
     environment:
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=OrderDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
-      - EventBusSettings__HostName=rabbitmq
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__OrderDB=Host=postgres;Port=5432;Database=OrderDb;Username=postgres;Password=postgres
+      - Identity__Authority=http://identity.api:80
+      - ShoppingCartApi__BaseUrl=http://shoppingcart.api:80
+      - ProductApi__BaseUrl=http://product.api:80
+      - CouponApi__BaseUrl=http://coupon.api:80
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - microservices-network
 
@@ -128,17 +170,22 @@ services:
     container_name: payment.api
     ports:
       - "5007:80"
-    depends_on:
-      - sqlserver
-      - rabbitmq
     environment:
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=PaymentDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
-      - EventBusSettings__HostName=rabbitmq
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__PaymentDB=Host=postgres;Port=5432;Database=PaymentDb;Username=postgres;Password=postgres
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - microservices-network
 
 volumes:
-  sqlserver_data:
+  postgres_data:
   rabbitmq_data:
 
 networks:

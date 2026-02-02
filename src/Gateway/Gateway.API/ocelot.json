@@ -6,7 +6,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "product.api",
-          "Port": 5001
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/products",
@@ -21,7 +21,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "product.api",
-          "Port": 5001
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/products/{id}",
@@ -36,7 +36,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "coupon.api",
-          "Port": 5002
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/coupons",
@@ -48,7 +48,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "shoppingcart.api",
-          "Port": 5003
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/cart",
@@ -60,7 +60,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "order.api",
-          "Port": 5004
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/orders",
