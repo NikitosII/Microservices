@@ -10,7 +10,7 @@ namespace Order.API.Services
 {
     public interface IOrderService
     {
-        Task<Orders> GetByIdAsync(Guid id, Guid userId);
+        Task<Orders?> GetByIdAsync(Guid id, Guid userId);
         Task<Orders?> GetByNumberAsync(string orderNumber, Guid userId);
         Task<IEnumerable<Orders>> GetOrdersByUserIdAsync(Guid userId);
         Task<Orders> CreateOrderAsync(Guid userId, CreateOrderRequest request);
@@ -73,7 +73,7 @@ namespace Order.API.Services
             }
         }
 
-        private async Task ValidateAndUpdateProductStockAsync(List<ShoppingCart.API.Models.CartItem> cartItems)
+        private async Task ValidateAndUpdateProductStockAsync(List<CartItem> cartItems)
         {
             var httpClient = _httpClient.CreateClient("ProductApi");
 

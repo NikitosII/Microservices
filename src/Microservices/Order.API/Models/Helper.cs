@@ -1,5 +1,4 @@
 ﻿using EventBus.Events;
-using ShoppingCart.API.Models;
 
 namespace Order.API.Models
 {
@@ -10,6 +9,16 @@ namespace Order.API.Models
         public Guid UserId { get; set; }
         public List<CartItem> Items { get; set; } = new();
         public decimal TotalPrice { get; set; }
+    }
+
+    public class CartItem
+    {
+        public Guid Id { get; set; }
+        public Guid ProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public decimal UnitPrice { get; set; }
+        public int Quantity { get; set; }
+        public string ImageUrl { get; set; } = string.Empty;
     }
 
     public class CouponValidationResponse
