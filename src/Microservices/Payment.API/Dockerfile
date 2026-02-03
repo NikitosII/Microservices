@@ -7,7 +7,8 @@ WORKDIR /src
 COPY ["src/Microservices/Payment.API/Payment.API.csproj", "src/Microservices/Payment.API/"]
 COPY ["src/Common/EventBus/EventBus.csproj", "src/Common/EventBus/"]
 RUN dotnet restore "src/Microservices/Payment.API/Payment.API.csproj"
-COPY . .
+COPY ["src/Microservices/Payment.API/", "src/Microservices/Payment.API/"]
+COPY ["src/Common/EventBus/", "src/Common/EventBus/"]
 WORKDIR "/src/src/Microservices/Payment.API"
 RUN dotnet build "Payment.API.csproj" -c Release -o /app/build
 

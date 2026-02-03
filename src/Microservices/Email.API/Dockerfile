@@ -7,7 +7,8 @@ WORKDIR /src
 COPY ["src/Microservices/Email.API/Email.API.csproj", "src/Microservices/Email.API/"]
 COPY ["src/Common/EventBus/EventBus.csproj", "src/Common/EventBus/"]
 RUN dotnet restore "src/Microservices/Email.API/Email.API.csproj"
-COPY . .
+COPY ["src/Microservices/Email.API/", "src/Microservices/Email.API/"]
+COPY ["src/Common/EventBus/", "src/Common/EventBus/"]
 WORKDIR "/src/src/Microservices/Email.API"
 RUN dotnet build "Email.API.csproj" -c Release -o /app/build
 

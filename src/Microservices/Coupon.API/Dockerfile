@@ -6,7 +6,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["src/Microservices/Coupon.API/Coupon.API.csproj", "src/Microservices/Coupon.API/"]
 RUN dotnet restore "src/Microservices/Coupon.API/Coupon.API.csproj"
-COPY . .
+COPY ["src/Microservices/Coupon.API/", "src/Microservices/Coupon.API/"]
 WORKDIR "/src/src/Microservices/Coupon.API"
 RUN dotnet build "Coupon.API.csproj" -c Release -o /app/build
 

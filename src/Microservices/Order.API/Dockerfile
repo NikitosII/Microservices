@@ -7,7 +7,8 @@ WORKDIR /src
 COPY ["src/Microservices/Order.API/Order.API.csproj", "src/Microservices/Order.API/"]
 COPY ["src/Common/EventBus/EventBus.csproj", "src/Common/EventBus/"]
 RUN dotnet restore "src/Microservices/Order.API/Order.API.csproj"
-COPY . .
+COPY ["src/Microservices/Order.API/", "src/Microservices/Order.API/"]
+COPY ["src/Common/EventBus/", "src/Common/EventBus/"]
 WORKDIR "/src/src/Microservices/Order.API"
 RUN dotnet build "Order.API.csproj" -c Release -o /app/build
 

@@ -4,9 +4,9 @@ EXPOSE 80
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["src/Gateway/Gateway.API/Gateway.API.csproj", "Gateway/Gateway.API/"]
-RUN dotnet restore "Gateway/Gateway.API/Gateway.API.csproj"
-COPY . .
+COPY ["src/Gateway/Gateway.API/Gateway.API.csproj", "src/Gateway/Gateway.API/"]
+RUN dotnet restore "src/Gateway/Gateway.API/Gateway.API.csproj"
+COPY ["src/Gateway/Gateway.API/", "src/Gateway/Gateway.API/"]
 WORKDIR "/src/Gateway/Gateway.API"
 RUN dotnet build "Gateway.API.csproj" -c Release -o /app/build
 
