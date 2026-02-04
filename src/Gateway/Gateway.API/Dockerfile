@@ -7,7 +7,7 @@ WORKDIR /src
 COPY ["src/Gateway/Gateway.API/Gateway.API.csproj", "src/Gateway/Gateway.API/"]
 RUN dotnet restore "src/Gateway/Gateway.API/Gateway.API.csproj"
 COPY ["src/Gateway/Gateway.API/", "src/Gateway/Gateway.API/"]
-WORKDIR "/src/Gateway/Gateway.API"
+WORKDIR "/src/src/Gateway/Gateway.API"
 RUN dotnet build "Gateway.API.csproj" -c Release -o /app/build
 
 FROM build AS publish
