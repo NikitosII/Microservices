@@ -4,7 +4,7 @@ services:
     container_name: postgres
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=1111
       - POSTGRES_MULTIPLE_DATABASES=IdentityDb,ProductDb,CouponDb,ShoppingCartDb,OrderDb,PaymentDb
     ports:
       - "5432:5432"
@@ -47,6 +47,7 @@ services:
       - "5000:80"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
       - Identity__Authority=http://identity.api:80
       - Identity__Audience=gateway.api
     depends_on:
@@ -67,6 +68,7 @@ services:
       - "5001:80"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__IdentityDB=Host=postgres;Port=5432;Database=IdentityDb;Username=postgres;Password=postgres
     depends_on:
       postgres:
@@ -83,6 +85,7 @@ services:
       - "5002:80"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__ProductDB=Host=postgres;Port=5432;Database=ProductDb;Username=postgres;Password=postgres
       - Identity__Authority=http://identity.api:80
       - RabbitMQ__Host=rabbitmq
@@ -105,10 +108,16 @@ services:
       - "5003:80"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__CouponDB=Host=postgres;Port=5432;Database=CouponDb;Username=postgres;Password=postgres
       - Identity__Authority=http://identity.api:80
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - microservices-network
@@ -122,6 +131,7 @@ services:
       - "5004:80"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__ShoppingCartDB=Host=postgres;Port=5432;Database=ShoppingCartDb;Username=postgres;Password=postgres
       - Identity__Authority=http://identity.api:80
       - ProductApi__BaseUrl=http://product.api:80
@@ -145,6 +155,7 @@ services:
       - "5005:80"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__OrderDB=Host=postgres;Port=5432;Database=OrderDb;Username=postgres;Password=postgres
       - Identity__Authority=http://identity.api:80
       - ShoppingCartApi__BaseUrl=http://shoppingcart.api:80
@@ -170,6 +181,7 @@ services:
       - "5007:80"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__PaymentDB=Host=postgres;Port=5432;Database=PaymentDb;Username=postgres;Password=postgres
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Username=admin
