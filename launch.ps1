@@ -55,7 +55,7 @@ while ($attempt -lt $maxAttempts -and -not $servicesReady) {
 
     # Check Gateway health
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:5000/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction SilentlyContinue
+        $response = Invoke-WebRequest -Uri "http://localhost:5000/api/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction SilentlyContinue
         if ($response.StatusCode -eq 200) {
             $servicesReady = $true
             Write-Host "OK Services are ready!" -ForegroundColor Green

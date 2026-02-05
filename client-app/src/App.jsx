@@ -5,13 +5,13 @@ import MetricsCard from './components/MetricsCard'
 
 function App() {
   const [services, setServices] = useState([
-    { name: 'Gateway', url: 'http://localhost:5000/health', port: 5000, status: 'checking' },
-    { name: 'Identity', url: 'http://localhost:5001/health', port: 5001, status: 'checking' },
-    { name: 'Product', url: 'http://localhost:5002/health', port: 5002, status: 'checking' },
-    { name: 'Coupon', url: 'http://localhost:5003/health', port: 5003, status: 'checking' },
-    { name: 'Shopping Cart', url: 'http://localhost:5004/health', port: 5004, status: 'checking' },
-    { name: 'Order', url: 'http://localhost:5005/health', port: 5005, status: 'checking' },
-    { name: 'Payment', url: 'http://localhost:5007/health', port: 5007, status: 'checking' },
+    { name: 'Gateway', url: 'http://localhost:5000/api/health', port: 5000, status: 'checking' },
+    { name: 'Identity', url: 'http://localhost:5001/api/health', port: 5001, status: 'checking' },
+    { name: 'Product', url: 'http://localhost:5002/api/health', port: 5002, status: 'checking' },
+    { name: 'Coupon', url: 'http://localhost:5003/api/health', port: 5003, status: 'checking' },
+    { name: 'Shopping Cart', url: 'http://localhost:5004/api/health', port: 5004, status: 'checking' },
+    { name: 'Order', url: 'http://localhost:5005/api/health', port: 5005, status: 'checking' },
+    { name: 'Payment', url: 'http://localhost:5007/api/health', port: 5007, status: 'checking' },
   ])
 
   const [metrics, setMetrics] = useState({
