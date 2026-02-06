@@ -1,6 +1,5 @@
 #!/bin/bash
-# Microservices E-Commerce Platform Launch Script (Linux/Mac)
-# This script launches all microservices and the frontend dashboard
+# Launch Script (Linux/Mac)
 
 # Colors
 RED='\033[0;31m'
@@ -85,7 +84,7 @@ fi
 echo -e "${GREEN}✓ Launching frontend...${NC}"
 echo ""
 echo -e "${CYAN}========================================"
-echo -e "  🚀 Platform is starting!              "
+echo -e "     Platform is starting!              "
 echo -e "========================================${NC}"
 echo ""
 echo -e "Dashboard URL: ${GREEN}http://localhost:55585${NC}"
@@ -105,6 +104,5 @@ echo -e "${YELLOW}Press Ctrl+C to stop the frontend (microservices will keep run
 echo -e "To stop everything: ${CYAN}docker-compose down${NC}"
 echo ""
 
-# Start frontend in foreground
 cd client-app
 npm run dev

@@ -1,5 +1,4 @@
-# Microservices E-Commerce Platform Launch Script (Windows)
-# This script launches all microservices and the frontend dashboard
+# Launch Script (Windows)
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  Microservices E-Commerce Platform    " -ForegroundColor Cyan
@@ -108,6 +107,5 @@ Write-Host "To stop everything: " -NoNewline
 Write-Host "docker-compose down" -ForegroundColor Cyan
 Write-Host ""
 
-# Start frontend in foreground
 Set-Location client-app
 npm run dev
