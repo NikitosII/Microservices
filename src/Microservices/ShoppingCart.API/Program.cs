@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using ShoppingCart.API.Data;
 using ShoppingCart.API.Services;
 using EventBus.Extensions;
@@ -8,7 +9,41 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Shopping Cart API",
+        Version = "v1",
+        Description = "Shopping Cart microservice API for e-commerce platform"
+    });
+
+    // Add JWT Bearer authentication
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your JWT token in the text box below.\n\nExample: eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1..."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 builder.Services.AddHealthChecks();
 
 // Add DbContext
@@ -35,6 +70,15 @@ builder.Services.AddAuthentication("Bearer")
         options.Authority = builder.Configuration["Identity:Authority"];
         options.RequireHttpsMetadata = false;
         options.Audience = "cart.api";
+
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuers = new[] { "http://localhost:5001", "http://host.docker.internal:5001", "http://identity.api", "http://identity.api:80" },
+            ValidateAudience = true,
+            ValidAudiences = new[] { "cart.api" },
+            ValidateLifetime = true
+        };
     });
 
 // Add Authorization
