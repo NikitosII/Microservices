@@ -1,10 +1,10 @@
 # Microservices E-Commerce Platform
 
-A microservices-based e-commerce platform built with ASP.NET Core 8.0, featuring a real-time monitoring dashboard, event-driven architecture with RabbitMQ, and comprehensive API documentation via Swagger.
+A microservices-based platform built with ASP.NET Core 8.0, featuring a real-time monitoring dashboard, event-driven architecture with RabbitMQ, and API documentation via Swagger.
 
 ## Project Overview
 
-This project demonstrates a modern microservices architecture implementing an e-commerce platform with the following capabilities:
+This project demonstrates a microservices architecture implementing an e-commerce platform with the following capabilities:
 
 - **User Authentication** - JWT-based authentication using Duende IdentityServer
 - **Product Catalog** - Product management with categories and inventory tracking
@@ -14,6 +14,16 @@ This project demonstrates a modern microservices architecture implementing an e-
 - **Payment Processing** - Payment handling with event-driven notifications
 - **Event-Driven Communication** - Asynchronous messaging via RabbitMQ and MassTransit
 
+## Technology Stack
+
+- **Backend**: ASP.NET Core 8.0, Entity Framework Core
+- **Database**: PostgreSQL 16
+- **Message Broker**: RabbitMQ with MassTransit
+- **API Gateway**: Ocelot
+- **Authentication**: Duende IdentityServer, JWT
+- **Frontend**: React 18, Vite, TailwindCSS
+- **Containerization**: Docker, Docker Compose
+  
 ## Quick Start
 
 ### Prerequisites
@@ -49,12 +59,12 @@ The script will start all microservices and open the dashboard at: **http://loca
 | **Order.API** | 5005 | Order processing | http://localhost:5005/swagger |
 | **Payment.API** | 5007 | Payment processing | http://localhost:5007/swagger |
 
-### Infrastructure
+## Testing the APIs
 
-| Service | Port | Description | Access |
-|---------|------|-------------|--------|
-| **PostgreSQL** | 5432 | Database server | `postgres` / `1111` |
-| **RabbitMQ** | 5672 / 15672 | Message broker | http://localhost:15672 (`admin`/`admin`) |
+### Using Swagger UI (Recommended)
+Each service has Swagger documentation. Open any service's Swagger URL from the table above.
+
+See **[USAGE_GUIDE.md](USAGE_GUIDE.md)** for complete API documentation and examples.
 
 ## Checking Service Health
 
@@ -82,42 +92,6 @@ docker logs gateway.api         # View specific service logs
 docker-compose logs -f          # Follow all logs
 ```
 
-## Testing the APIs
-
-### Using Swagger UI (Recommended)
-Each service has Swagger documentation. Open any service's Swagger URL from the table above.
-
-### Quick API Examples
-
-#### Get All Products (No Auth Required)
-```bash
-curl http://localhost:5002/api/products
-```
-
-#### Get All Coupons (No Auth Required)
-```bash
-curl http://localhost:5003/api/coupons
-```
-
-#### Create a Coupon
-```bash
-curl -X POST http://localhost:5003/api/coupons \
-  -H "Content-Type: application/json" \
-  -d '{
-    "code": "SAVE20",
-    "description": "20% off your order",
-    "discountAmount": 20,
-    "discountType": "Percentage",
-    "minimumAmount": 50,
-    "maximumDiscount": 100,
-    "validFrom": "2024-01-01T00:00:00Z",
-    "validUntil": "2025-12-31T23:59:59Z",
-    "maxUsageCount": 100
-  }'
-```
-
-See **[USAGE_GUIDE.md](USAGE_GUIDE.md)** for complete API documentation and examples.
-
 ## Project Structure
 
 ```
@@ -140,38 +114,6 @@ Microservices/
 ├── launch.ps1                     # Windows launch script
 ├── launch.sh                      # Linux/Mac launch script
 └── USAGE_GUIDE.md                 # Detailed API documentation
-```
-
-## Technology Stack
-
-- **Backend**: ASP.NET Core 8.0, Entity Framework Core
-- **Database**: PostgreSQL 16
-- **Message Broker**: RabbitMQ with MassTransit
-- **API Gateway**: Ocelot
-- **Authentication**: Duende IdentityServer, JWT
-- **Frontend**: React 18, Vite, TailwindCSS
-- **Containerization**: Docker, Docker Compose
-
-## Quick Commands
-
-```bash
-# Start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop all services
-docker-compose down
-
-# Rebuild and restart a specific service
-docker-compose up -d --build product.api
-
-# Reset everything (including databases)
-docker-compose down -v && docker-compose up -d
-
-# Start frontend only
-cd client-app && npm run dev
 ```
 
 ## Documentation
