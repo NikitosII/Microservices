@@ -67,6 +67,16 @@ namespace Identity.API.Models
         public string LastName { get; set; }
     }
 
+    public class LoginRequest
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        public string Password { get; set; }
+    }
+
     public class RedirectViewModel
     {
         public string RedirectUrl { get; set; }

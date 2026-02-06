@@ -87,7 +87,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__ProductDB=Host=postgres;Port=5432;Database=ProductDb;Username=postgres;Password=1111
-      - Identity__Authority=http://identity.api:80
+      - Identity__Authority=http://host.docker.internal:5001
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Username=admin
       - RabbitMQ__Password=admin

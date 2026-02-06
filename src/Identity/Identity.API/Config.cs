@@ -25,6 +25,46 @@ namespace Identity.API
                 new ApiScope("coupon.api", "Coupon API")
             };
 
+        public static IEnumerable<ApiResource> ApiResources =>
+            new ApiResource[]
+            {
+                new ApiResource("gateway", "Gateway API")
+                {
+                    Scopes = { "gateway" },
+                    UserClaims = { "role", "name", "email" }
+                },
+                new ApiResource("product.api", "Product API")
+                {
+                    Scopes = { "product.api" },
+                    UserClaims = { "role", "name", "email" }
+                },
+                new ApiResource("order.api", "Order API")
+                {
+                    Scopes = { "order.api" },
+                    UserClaims = { "role", "name", "email" }
+                },
+                new ApiResource("cart.api", "Shopping Cart API")
+                {
+                    Scopes = { "cart.api" },
+                    UserClaims = { "role", "name", "email" }
+                },
+                new ApiResource("email.api", "Email API")
+                {
+                    Scopes = { "email.api" },
+                    UserClaims = { "role", "name", "email" }
+                },
+                new ApiResource("payment.api", "Payment API")
+                {
+                    Scopes = { "payment.api" },
+                    UserClaims = { "role", "name", "email" }
+                },
+                new ApiResource("coupon.api", "Coupon API")
+                {
+                    Scopes = { "coupon.api" },
+                    UserClaims = { "role", "name", "email" }
+                }
+            };
+
         public static IEnumerable<Client> Clients =>
             new Client[]
             {
@@ -120,6 +160,32 @@ namespace Identity.API
                     {
                         "gateway"
                     }
+                },
+
+                // Swagger/Testing client (Resource Owner Password)
+                new Client
+                {
+                    ClientId = "swagger-client",
+                    ClientName = "Swagger Testing Client",
+                    AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
+                    RequireClientSecret = false,
+
+                    AllowedScopes =
+                    {
+                        IdentityServerConstants.StandardScopes.OpenId,
+                        IdentityServerConstants.StandardScopes.Profile,
+                        IdentityServerConstants.StandardScopes.Email,
+                        "roles",
+                        "gateway",
+                        "product.api",
+                        "order.api",
+                        "cart.api",
+                        "coupon.api",
+                        "payment.api"
+                    },
+
+                    AccessTokenLifetime = 3600, // 1 hour
+                    AllowOfflineAccess = true
                 }
             };
     }

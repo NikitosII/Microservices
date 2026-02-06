@@ -182,6 +182,53 @@ namespace Identity.API.Controllers
             }
         }
 
+        [HttpPost("api/login")]
+        public async Task<IActionResult> ApiLogin([FromBody] LoginRequest request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var result = await _signInManager.PasswordSignInAsync(request.Email, request.Password, false, lockoutOnFailure: true);
+
+                if (result.Succeeded)
+                {
+                    var user = await _userManager.FindByEmailAsync(request.Email);
+                    if (user == null)
+                    {
+                        return BadRequest(new { Error = "User not found" });
+                    }
+
+                    // Return instructions for getting token
+                    var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                    return Ok(new
+                    {
+                        Message = "Login successful. To get an access token, use the /connect/token endpoint",
+                        TokenEndpoint = $"{baseUrl}/connect/token",
+                        Instructions = "Use POST with form data: grant_type=password&username=" + request.Email + "&password=yourpassword&client_id=swagger-client&scope=openid profile product.api",
+                        Email = user.Email,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName
+                    });
+                }
+
+                if (result.IsLockedOut)
+                {
+                    return BadRequest(new { Error = "Account locked out" });
+                }
+
+                return BadRequest(new { Error = "Invalid email or password" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during API login");
+                return StatusCode(500, new { Error = "Internal server error" });
+            }
+        }
+
         private bool IsNativeClient(AuthorizationRequest context)
         {
 
