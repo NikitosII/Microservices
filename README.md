@@ -92,8 +92,8 @@ Microservices/
 
 ## Application operation
 
-![Структура](image/1.png)
-![Структура](image/2.png)
+![Структура](project_images/1.png)
+![Структура](project_images/2.png)
 
 ## Documentation
 
