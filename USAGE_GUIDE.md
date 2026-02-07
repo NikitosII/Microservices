@@ -8,6 +8,7 @@ This guide provides detailed instructions for testing and interacting with all m
 - [Using Swagger UI](#using-swagger-ui)
 - [Authentication & Authorization](#authentication--authorization)
 - [API Reference](#api-reference)
+- [Unit Tests](#unit-tests)
 - [Troubleshooting](#troubleshooting)
 - [Service Endpoints Quick Reference](#service-endpoints-quick-reference)
 
@@ -859,6 +860,136 @@ npm run dev
 ```
 
 </details>
+
+---
+
+## Unit Tests
+
+The project includes **95 unit tests** across 4 test projects, using **MSTest** with **Moq** for mocking and **EF Core InMemory** for database testing.
+
+### Test Projects Overview
+
+| Test Project | Tests | Test Files | Coverage Area |
+|-------------|-------|------------|--------------|
+| **Product.API.Tests** | 19 | ProductsControllerTests, ProductModelTests | CRUD operations, model defaults |
+| **Order.API.Tests** | 36 | OrdersControllerTests, OrderServiceTests, OrderModelTests | Endpoints, business logic, status transitions |
+| **ShoppingCart.API.Tests** | 27 | CartControllerTests, CartServiceTests, CartModelTests | Endpoints, cart operations, price calculations |
+| **Gateway.Tests** | 13 | OcelotConfigurationTests | Route config, HTTP methods, downstream settings |
+
+### Running Tests
+
+<details>
+<summary><strong>Test commands</strong> (click to expand)</summary>
+
+**Run all tests:**
+```bash
+dotnet test MicroservicesECommerce.sln
+```
+
+**Run a specific test project:**
+```bash
+dotnet test Product.API.Tests/Product.API.Tests.csproj
+dotnet test Order.API.Tests/Order.API.Tests.csproj
+dotnet test ShoppingCart.API.Tests/ShoppingCart.API.Tests.csproj
+dotnet test Gateway.Tests/Gateway.Tests.csproj
+```
+
+**Run with detailed output:**
+```bash
+dotnet test MicroservicesECommerce.sln --verbosity detailed
+```
+
+</details>
+
+### What Is Tested
+
+<details>
+<summary><strong>Product.API.Tests (19 tests)</strong> (click to expand)</summary>
+
+**ProductsControllerTests (13 tests):**
+- `GetProducts` - Returns active products, handles empty list
+- `GetProduct` - Returns product by ID, handles not found, filters inactive products
+- `CreateProduct` - Returns created result, verifies database save
+- `UpdateProduct` - Updates existing product, handles not found
+- `DeleteProduct` - Soft-deletes product (sets IsActive=false), handles not found
+- `GetByCategory` - Filters by category, handles no matches
+
+**ProductModelTests (6 tests):**
+- Default values (Id, Name, Price, Stock, Category, IsActive)
+- Property setter verification
+- IsActive defaults to true
+- Price accepts decimal and zero values
+- Stock can be negative (documents current behavior)
+
+</details>
+
+<details>
+<summary><strong>Order.API.Tests (36 tests)</strong> (click to expand)</summary>
+
+**OrderServiceTests (14 tests):**
+- `GetByIdAsync` - Returns order for user, handles not found, prevents cross-user access
+- `GetByNumberAsync` - Returns order by number, handles not found
+- `GetOrdersByUserIdAsync` - Returns user orders, verifies descending date sort
+- `UpdateOrderStatusAsync` - Valid transitions, handles not found, prevents invalid transitions
+- `CancelOrderAsync` - Cancels pending/confirmed orders, prevents cancelling shipped orders, handles not found
+
+**OrdersControllerTests (14 tests):**
+- `GetOrders` - Returns user orders, returns 401 for unauthenticated users
+- `GetOrder` - Returns order by ID, handles not found
+- `CreateOrder` - Returns created result, returns 400 for empty cart or invalid coupon
+- `UpdateOrderStatus` - Returns 204 on success, handles not found
+- `GetOrderByNumber` - Returns order by number, handles not found
+- `CancelOrder` - Returns 204 on success, returns 400 when order cannot be cancelled
+
+**OrderModelTests (8 tests):**
+- Order, OrderItem, ShippingAddress, PaymentInfo - default values and property setters
+- OrderStatus enum values (Pending=0, Confirmed=1, Processing=2, Shipped=3, Delivered=4, Cancelled=5, Refunded=6)
+
+</details>
+
+<details>
+<summary><strong>ShoppingCart.API.Tests (27 tests)</strong> (click to expand)</summary>
+
+**CartControllerTests (10 tests):**
+- `GetCart` - Returns cart with items, returns 401 for unauthenticated users
+- `AddToCart` - Returns updated cart, returns 400 when product not found
+- `UpdateCartItem` - Updates quantity, returns 400 when item not found
+- `RemoveFromCart` - Returns updated cart after removal
+- `ClearCart` - Returns 204 on success
+- `GetCartItemCount` - Returns correct count, returns 0 for empty cart
+
+**CartServiceTests (8 tests):**
+- `GetCartAsync` - Returns existing cart, creates new cart for new users
+- `UpdateCartItemAsync` - Updates item quantity, removes item when quantity=0, throws when item not found
+- `RemoveFromCartAsync` - Removes specific item, handles non-existent item
+- `ClearCartAsync` - Removes all items and resets price
+
+**CartModelTests (9 tests):**
+- Cart, CartItem, AddToCartRequest, UpdateCartRequest - default values and property setters
+- TotalPrice calculation: (quantity * unitPrice) across all items
+
+</details>
+
+<details>
+<summary><strong>Gateway.Tests (13 tests)</strong> (click to expand)</summary>
+
+**OcelotConfigurationTests (13 tests):**
+- Configuration structure: Routes array exists, GlobalConfiguration exists
+- Route existence: Products, Coupons, Cart, Orders routes are configured
+- HTTP methods: Products supports GET/POST, Products/{id} supports GET/PUT/DELETE, Cart supports GET/POST/DELETE
+- Downstream settings: All routes use HTTP scheme, all routes use port 80
+- Route mapping: All downstream paths start with /api/, all upstream paths start with /
+
+</details>
+
+### Test Stack
+
+| Component | Package | Version |
+|-----------|---------|---------|
+| Test Framework | MSTest | 3.1.1 |
+| Mocking | Moq | 4.20.70 |
+| In-Memory Database | Microsoft.EntityFrameworkCore.InMemory | 8.0.0 |
+| Code Coverage | coverlet.collector | 6.0.0 |
 
 ---
 

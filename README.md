@@ -23,7 +23,8 @@ This project demonstrates a microservices architecture implementing an e-commerc
 - **Authentication**: Duende IdentityServer, JWT
 - **Frontend**: React 18, Vite, TailwindCSS
 - **Containerization**: Docker, Docker Compose
-  
+- **Testing**: MSTest, Moq
+
 ## Quick Start
 
 ### Prerequisites
@@ -59,6 +60,10 @@ The script will start all microservices and open the dashboard at: **http://loca
 | **Order.API** | 5005 | Order processing | http://localhost:5005/swagger |
 | **Payment.API** | 5007 | Payment processing | http://localhost:5007/swagger |
 
+## Unit Tests
+
+The project includes unit tests across 4 test projects covering controllers, services, models, and gateway configuration.
+
 ## Testing the APIs
 
 ### Using Swagger UI (Recommended)
@@ -83,8 +88,13 @@ Microservices/
 │       ├── ShoppingCart.API/      # Shopping cart
 │       ├── Order.API/             # Order processing
 │       └── Payment.API/           # Payment processing
+├── Product.API.Tests/             # Product API unit tests (19 tests)
+├── Order.API.Tests/               # Order API unit tests (36 tests)
+├── ShoppingCart.API.Tests/        # Shopping Cart API unit tests (27 tests)
+├── Gateway.Tests/                 # Gateway configuration tests (13 tests)
 ├── client-app/                    # React dashboard (Vite)
 ├── docker-compose.yml             # Container orchestration
+├── MicroservicesECommerce.sln     # Solution file (includes all test projects)
 ├── launch.ps1                     # Windows launch script
 ├── launch.sh                      # Linux/Mac launch script
 └── USAGE_GUIDE.md                 # Detailed API documentation
