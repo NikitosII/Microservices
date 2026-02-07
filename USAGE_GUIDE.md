@@ -72,7 +72,7 @@ docker-compose logs -f           # Follow logs in real-time
 
 ---
 
-## Using Swagger UI (Recommended)
+## Using Swagger UI
 
 Each microservice has built-in Swagger documentation for easy API testing:
 
@@ -106,7 +106,9 @@ A default admin account is automatically created when the Identity service start
 
 **Note:** This account has full admin privileges and can access all protected endpoints.
 
-### Registering New Users
+### Important information
+<details>
+<summary><strong>Registering New Users</strong> (click to expand)</summary>
 
 To create a new user account:
 
@@ -158,9 +160,12 @@ Invoke-RestMethod -Uri "http://localhost:5001/api/account/register" `
 - Must contain at least one number
 - Must contain at least one special character
 
-### Getting JWT Tokens
+</details>
 
-#### Method 1: Using Swagger UI (Recommended)
+<details>
+<summary><strong>Getting JWT Tokens</strong> (click to expand)</summary>
+
+#### Method 1: Using Swagger UI
 
 This is the easiest way to get and use JWT tokens for testing:
 
@@ -282,7 +287,10 @@ curl -X POST http://localhost:5001/connect/token \
   -d "grant_type=password&client_id=swagger-client&username=user@example.com&password=User@123&scope=openid profile email roles cart.api order.api"
 ```
 
-### Using Tokens in API Calls
+</details>
+
+<details>
+<summary><strong>Using Tokens in API Calls</strong> (click to expand)</summary>
 
 #### In Swagger UI
 
@@ -309,7 +317,11 @@ $headers = @{
 Invoke-RestMethod -Uri "http://localhost:5004/api/cart" -Headers $headers
 ```
 
-### Endpoint Authorization Requirements
+</details>
+
+
+<details>
+<summary><strong>Endpoint Authorization Requirements</strong> (click to expand)</summary>
 
 | Endpoint | Authentication Required | Admin Role Required |
 |----------|------------------------|---------------------|
@@ -337,7 +349,10 @@ Invoke-RestMethod -Uri "http://localhost:5004/api/cart" -Headers $headers
 | POST /api/account/register | ❌ No | ❌ No |
 | POST /connect/token | ❌ No | ❌ No |
 
-### Token Information
+</details>
+
+<details>
+<summary><strong>Token Information</strong> (click to expand)</summary>
 
 - **Token Lifetime:** 3600 seconds (1 hour)
 - **Token Type:** Bearer
@@ -354,6 +369,8 @@ Invoke-RestMethod -Uri "http://localhost:5004/api/cart" -Headers $headers
   - `coupon.api` - Coupon API access
 
 **Note:** Tokens expire after 1 hour. If you get a 401 Unauthorized error, request a new token.
+
+</details>
 
 ---
 

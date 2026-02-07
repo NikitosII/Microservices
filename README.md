@@ -66,32 +66,6 @@ Each service has Swagger documentation. Open any service's Swagger URL from the 
 
 See **[USAGE_GUIDE.md](USAGE_GUIDE.md)** for complete API documentation and examples.
 
-## Checking Service Health
-
-### 1. Dashboard (Recommended)
-Open **http://localhost:55585** to see real-time health status of all services.
-
-### 2. Health Endpoints
-Each service exposes a health endpoint:
-
-```bash
-# Check individual services
-curl http://localhost:5000/api/health   # Gateway
-curl http://localhost:5001/api/health   # Identity
-curl http://localhost:5002/api/health   # Product
-curl http://localhost:5003/api/health   # Coupon
-curl http://localhost:5004/api/health   # Shopping Cart
-curl http://localhost:5005/api/health   # Order
-curl http://localhost:5007/api/health   # Payment
-```
-
-### 3. Docker Status
-```bash
-docker ps -a                    # View all containers
-docker logs gateway.api         # View specific service logs
-docker-compose logs -f          # Follow all logs
-```
-
 ## Project Structure
 
 ```
@@ -115,6 +89,11 @@ Microservices/
 ├── launch.sh                      # Linux/Mac launch script
 └── USAGE_GUIDE.md                 # Detailed API documentation
 ```
+
+## Application operation
+
+![Структура](image/1.png)
+![Структура](image/2.png)
 
 ## Documentation
 
