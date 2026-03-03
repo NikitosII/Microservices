@@ -109,17 +109,3 @@ Microservices/
 
 - **[USAGE_GUIDE.md](USAGE_GUIDE.md)** - Complete API documentation with examples
 - **Swagger UI** - Available at each service's `/swagger` endpoint
-
-## Service Endpoints Summary
-
-| Endpoint | URL |
-|----------|-----|
-| Dashboard | http://localhost:55585 |
-| Gateway API | http://localhost:5000 |
-| Identity API | http://localhost:5001 |
-| Product API | http://localhost:5002 |
-| Coupon API | http://localhost:5003 |
-| Shopping Cart API | http://localhost:5004 |
-| Order API | http://localhost:5005 |
-| Payment API | http://localhost:5007 |
-| RabbitMQ Management | http://localhost:15672 |
