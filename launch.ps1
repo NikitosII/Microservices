@@ -89,7 +89,7 @@ Write-Host "     Platform is starting!              " -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Dashboard URL: " -NoNewline
-Write-Host "http://localhost:55585" -ForegroundColor Green
+Write-Host "http://localhost:5173" -ForegroundColor Green
 Write-Host ""
 Write-Host "Microservices:" -ForegroundColor Yellow
 Write-Host "  - Gateway API:        http://localhost:5000" -ForegroundColor Gray

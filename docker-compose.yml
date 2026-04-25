@@ -87,7 +87,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__ProductDB=Host=postgres;Port=5432;Database=ProductDb;Username=postgres;Password=1111
-      - Identity__Authority=http://host.docker.internal:5001
+      - Identity__Authority=http://identity.api
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Username=admin
       - RabbitMQ__Password=admin
@@ -183,6 +183,9 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__PaymentDB=Host=postgres;Port=5432;Database=PaymentDb;Username=postgres;Password=1111
+      - Identity__Authority=http://identity.api
+      - Identity__Audience=payment.api
+      - OrderApi__BaseUrl=http://order.api
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Username=admin
       - RabbitMQ__Password=admin
@@ -191,6 +194,10 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      identity.api:
+        condition: service_started
+      order.api:
+        condition: service_started
     networks:
       - microservices-network
 
