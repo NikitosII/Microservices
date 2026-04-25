@@ -6,10 +6,15 @@ namespace EventBus.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddEventBus(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddEventBus(
+            this IServiceCollection services,
+            IConfiguration configuration,
+            Action<IBusRegistrationConfigurator>? configure = null)
         {
             services.AddMassTransit(x =>
             {
+                configure?.Invoke(x);
+
                 x.SetKebabCaseEndpointNameFormatter();
 
                 x.UsingRabbitMq((context, cfg) =>
