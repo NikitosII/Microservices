@@ -1,4 +1,3 @@
-using EventBus.Events;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Order.API.Data;
@@ -13,7 +12,7 @@ namespace Order.API.Services
         Task<Orders?> GetByIdAsync(Guid id, Guid userId);
         Task<Orders?> GetByNumberAsync(string orderNumber, Guid userId);
         Task<IEnumerable<Orders>> GetOrdersByUserIdAsync(Guid userId);
-        Task<Orders> CreateOrderAsync(Guid userId, CreateOrderRequest request);
+        Task<Orders> CreateOrderAsync(Guid userId, string email, CreateOrderRequest request);
         Task<bool> UpdateOrderStatusAsync(Guid orderId, OrderStatus status);
         Task<bool> CancelOrderAsync(Guid orderId, Guid userId);
     }
@@ -69,7 +68,6 @@ namespace Order.API.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error clearing user cart for {UserId}", userId);
-                // Don't throw - cart clearing is not critical for order creation
             }
         }
 
@@ -137,11 +135,10 @@ namespace Order.API.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error using coupon {CouponId}", couponId);
-                // Don't throw - coupon usage is not critical for order creation
             }
         }
 
-        private async Task PublishOrderCreatedEvent(Orders order)
+        private async Task PublishOrderCreatedEvent(Orders order, string email)
         {
             var orderCreatedEvent = new OrderCreatedEvent
             {
@@ -149,6 +146,7 @@ namespace Order.API.Services
                 UserId = order.UserId,
                 OrderNumber = order.OrderNumber,
                 TotalAmount = order.TotalAmount,
+                Email = email,
                 Items = order.Items.Select(item => new OrderItemEvent
                 {
                     ProductId = item.ProductId,
@@ -161,7 +159,7 @@ namespace Order.API.Services
             await _publishEndpoint.Publish(orderCreatedEvent);
         }
 
-        private async Task PublishOrderStatusUpdatedEvent(Orders order, Orders.OrderStatus oldStatus)
+        private async Task PublishOrderStatusUpdatedEvent(Orders order, OrderStatus oldStatus)
         {
             var orderStatusUpdatedEvent = new OrderStatusUpdatedEvent
             {
@@ -184,7 +182,6 @@ namespace Order.API.Services
 
         private decimal CalculateShippingCost(ShippingAddress address)
         {
-            // Simple shipping cost calculation based on country
             return address.Country.ToUpper() switch
             {
                 "USA" => 10.00m,
@@ -192,17 +189,17 @@ namespace Order.API.Services
             };
         }
 
-        private bool IsValidStatusTransition(Orders.OrderStatus currentStatus, Orders.OrderStatus newStatus)
+        private bool IsValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus)
         {
-            var allowedTransitions = new Dictionary<Orders.OrderStatus, List<Orders.OrderStatus>>
+            var allowedTransitions = new Dictionary<OrderStatus, List<OrderStatus>>
             {
-                [Orders.OrderStatus.Pending] = new() { Orders.OrderStatus.Confirmed, Orders.OrderStatus.Cancelled },
-                [Orders.OrderStatus.Confirmed] = new() { Orders.OrderStatus.Processing, Orders.OrderStatus.Cancelled },
-                [Orders.OrderStatus.Processing] = new() { Orders.OrderStatus.Shipped, Orders.OrderStatus.Cancelled },
-                [Orders.OrderStatus.Shipped] = new() { Orders.OrderStatus.Delivered },
-                [Orders.OrderStatus.Delivered] = new() { Orders.OrderStatus.Refunded },
-                [Orders.OrderStatus.Cancelled] = new(),
-                [Orders.OrderStatus.Refunded] = new()
+                [OrderStatus.Pending] = new() { OrderStatus.Confirmed, OrderStatus.Cancelled },
+                [OrderStatus.Confirmed] = new() { OrderStatus.Processing, OrderStatus.Cancelled },
+                [OrderStatus.Processing] = new() { OrderStatus.Shipped, OrderStatus.Cancelled },
+                [OrderStatus.Shipped] = new() { OrderStatus.Delivered },
+                [OrderStatus.Delivered] = new() { OrderStatus.Refunded },
+                [OrderStatus.Cancelled] = new(),
+                [OrderStatus.Refunded] = new()
             };
 
             return allowedTransitions[currentStatus].Contains(newStatus);
@@ -255,126 +252,107 @@ namespace Order.API.Services
             }
         }
 
-        public async Task<Orders> CreateOrderAsync(Guid userId, CreateOrderRequest request)
+        public async Task<Orders> CreateOrderAsync(Guid userId, string email, CreateOrderRequest request)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            // If anything here fails the whole thing rolls back; no orphaned events.
+            Orders order;
+            Guid? couponId = null;
 
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                // Get user's cart
-                var cart = await GetUserCartAsync(userId);
-                if (cart == null || cart.Items.Count == 0)
+                try
                 {
-                    throw new InvalidOperationException("Cart is empty");
-                }
+                    var cart = await GetUserCartAsync(userId);
+                    if (cart == null || cart.Items.Count == 0)
+                        throw new InvalidOperationException("Cart is empty");
 
-                // Validate and update product stock
-                await ValidateAndUpdateProductStockAsync(cart.Items);
+                    await ValidateAndUpdateProductStockAsync(cart.Items);
 
-                // Validate coupon if provided
-                decimal discount = 0;
-                Guid? couponId = null;
-
-                if (!string.IsNullOrEmpty(request.CouponCode))
-                {
-                    var couponValidation = await ValidateCouponAsync(request.CouponCode, cart.TotalPrice);
-                    if (!couponValidation.IsValid)
+                    decimal discount = 0;
+                    if (!string.IsNullOrEmpty(request.CouponCode))
                     {
-                        throw new ArgumentException(couponValidation.Message);
+                        var couponValidation = await ValidateCouponAsync(request.CouponCode, cart.TotalPrice);
+                        if (!couponValidation.IsValid)
+                            throw new ArgumentException(couponValidation.Message);
+
+                        discount = couponValidation.DiscountAmount;
+                        couponId = couponValidation.Coupon?.Id;
                     }
 
-                    discount = couponValidation.DiscountAmount;
-                    couponId = couponValidation.Coupon?.Id;
-                }
+                    var subtotal = cart.TotalPrice;
+                    var tax = subtotal * 0.1m;
+                    var shippingCost = CalculateShippingCost(request.ShippingAddress);
+                    var totalAmount = subtotal + tax + shippingCost - discount;
 
-                // Calculate totals
-                var subtotal = cart.TotalPrice;
-                var tax = subtotal * 0.1m; 
-                var shippingCost = CalculateShippingCost(request.ShippingAddress);
-                var totalAmount = subtotal + tax + shippingCost - discount;
-
-                // Create order
-                var order = new Orders
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = userId,
-                    OrderNumber = GenerateOrderNumber(),
-                    Status = Orders.OrderStatus.Pending,
-                    Items = cart.Items.Select(item => new OrderItem
+                    order = new Orders
                     {
                         Id = Guid.NewGuid(),
-                        ProductId = item.ProductId,
-                        ProductName = item.ProductName,
-                        UnitPrice = item.UnitPrice,
-                        Quantity = item.Quantity,
-                        TotalPrice = item.UnitPrice * item.Quantity
-                    }).ToList(),
-                    Subtotal = subtotal,
-                    Tax = tax,
-                    ShippingCost = shippingCost,
-                    Discount = discount,
-                    TotalAmount = totalAmount,
-                    ShippingAddress = request.ShippingAddress,
-                    PaymentInfo = new PaymentInfo
-                    {
-                        Method = request.PaymentMethod,
-                        AmountPaid = totalAmount
-                    },
-                    CouponCode = request.CouponCode,
-                    CreatedAt = DateTime.UtcNow
-                };
+                        UserId = userId,
+                        OrderNumber = GenerateOrderNumber(),
+                        Status = OrderStatus.Pending,
+                        Items = cart.Items.Select(item => new OrderItem
+                        {
+                            Id = Guid.NewGuid(),
+                            ProductId = item.ProductId,
+                            ProductName = item.ProductName,
+                            UnitPrice = item.UnitPrice,
+                            Quantity = item.Quantity,
+                            TotalPrice = item.UnitPrice * item.Quantity
+                        }).ToList(),
+                        Subtotal = subtotal,
+                        Tax = tax,
+                        ShippingCost = shippingCost,
+                        Discount = discount,
+                        TotalAmount = totalAmount,
+                        ShippingAddress = request.ShippingAddress,
+                        PaymentInfo = new PaymentInfo
+                        {
+                            Method = request.PaymentMethod,
+                            AmountPaid = totalAmount
+                        },
+                        CouponCode = request.CouponCode,
+                        CreatedAt = DateTime.UtcNow
+                    };
 
-                _context.Orders.Add(order);
-                await _context.SaveChangesAsync();
+                    _context.Orders.Add(order);
 
-                // Use coupon if applicable
-                if (couponId.HasValue)
-                {
-                    await UseCouponAsync(couponId.Value);
+                    await PublishOrderCreatedEvent(order, email);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
                 }
-
-                // Clear user's cart
-                await ClearUserCartAsync(userId);
-
-                // Publish order created event
-                await PublishOrderCreatedEvent(order);
-
-                await transaction.CommitAsync();
-
-                _logger.LogInformation("Order created: {OrderId} - {OrderNumber}", order.Id, order.OrderNumber);
-                return order;
+                catch (Exception)
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
             }
-            catch (Exception)
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
+
+            if (couponId.HasValue)
+                await UseCouponAsync(couponId.Value);
+
+            await ClearUserCartAsync(userId);
+
+            _logger.LogInformation("Order created: {OrderId} - {OrderNumber}", order.Id, order.OrderNumber);
+            return order;
         }
 
-        public async Task<bool> UpdateOrderStatusAsync(Guid orderId, Orders.OrderStatus status)
+        public async Task<bool> UpdateOrderStatusAsync(Guid orderId, OrderStatus status)
         {
             try
             {
                 var order = await _context.Orders.FindAsync(orderId);
                 if (order == null)
-                {
                     return false;
-                }
 
-                // Validate status transition
                 if (!IsValidStatusTransition(order.Status, status))
-                {
                     return false;
-                }
 
                 var oldStatus = order.Status;
                 order.Status = status;
                 order.UpdatedAt = DateTime.UtcNow;
 
-                await _context.SaveChangesAsync();
-
-                // Publish order status updated event
                 await PublishOrderStatusUpdatedEvent(order, oldStatus);
+                await _context.SaveChangesAsync();
 
                 _logger.LogInformation("Order status updated: {OrderId} -> {Status}", orderId, status);
                 return true;
@@ -400,17 +378,15 @@ namespace Order.API.Services
                 }
 
                 // Check if order can be cancelled
-                if (order.Status != Orders.OrderStatus.Pending && order.Status != Orders.OrderStatus.Confirmed)
+                if (order.Status != OrderStatus.Pending && order.Status != OrderStatus.Confirmed)
                 {
                     throw new ArgumentException("Order cannot be cancelled in its current state");
                 }
 
-                order.Status = Orders.OrderStatus.Cancelled;
+                order.Status = OrderStatus.Cancelled;
                 order.UpdatedAt = DateTime.UtcNow;
 
-                // Return product stock
                 await ReturnProductStockAsync(order.Items);
-
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation("Order cancelled: {OrderId}", orderId);

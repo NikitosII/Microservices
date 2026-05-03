@@ -1,9 +1,10 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Order.API.Models;
 
 namespace Order.API.Data
 {
-    public class OrderContext : DbContext 
+    public class OrderContext : DbContext
     {
         public OrderContext(DbContextOptions<OrderContext> options) : base(options)
         {
@@ -14,6 +15,11 @@ namespace Order.API.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Outbox tables — written atomically with the order
+            modelBuilder.AddOutboxMessageEntity();
+            modelBuilder.AddOutboxStateEntity();
+            modelBuilder.AddInboxStateEntity();
+
             modelBuilder.Entity<Orders>(entity =>
             {
                 entity.HasKey(e => e.Id);

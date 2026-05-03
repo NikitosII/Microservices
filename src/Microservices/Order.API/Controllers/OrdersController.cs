@@ -23,12 +23,13 @@ namespace Order.API.Controllers
         {
             var userIdClaim = User.FindFirst("sub")?.Value;
             if (string.IsNullOrEmpty(userIdClaim))
-            {
                 throw new UnauthorizedAccessException("User not authenticated");
-            }
 
             return Guid.Parse(userIdClaim);
         }
+
+        private string GetUserEmail() =>
+            User.FindFirst("email")?.Value ?? string.Empty;
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Orders>>> GetOrders()
@@ -89,7 +90,8 @@ namespace Order.API.Controllers
                 }
 
                 var userId = GetUserId();
-                var order = await _orderService.CreateOrderAsync(userId, request);
+                var email = GetUserEmail();
+                var order = await _orderService.CreateOrderAsync(userId, email, request);
 
                 _logger.LogInformation("Order created with ID {OrderId} for user {UserId}", order.Id, userId);
                 return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);

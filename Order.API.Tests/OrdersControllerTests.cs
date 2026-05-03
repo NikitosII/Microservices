@@ -157,7 +157,7 @@ namespace Order.API.Tests
                 TotalAmount = 150.00m
             };
 
-            _orderServiceMock.Setup(s => s.CreateOrderAsync(_testUserId, request))
+            _orderServiceMock.Setup(s => s.CreateOrderAsync(_testUserId, It.IsAny<string>(), request))
                 .ReturnsAsync(createdOrder);
 
             // Act
@@ -179,7 +179,7 @@ namespace Order.API.Tests
                 PaymentMethod = "CreditCard"
             };
 
-            _orderServiceMock.Setup(s => s.CreateOrderAsync(_testUserId, request))
+            _orderServiceMock.Setup(s => s.CreateOrderAsync(_testUserId, It.IsAny<string>(), request))
                 .ThrowsAsync(new InvalidOperationException("Cart is empty"));
 
             // Act
@@ -202,7 +202,7 @@ namespace Order.API.Tests
                 CouponCode = "INVALID"
             };
 
-            _orderServiceMock.Setup(s => s.CreateOrderAsync(_testUserId, request))
+            _orderServiceMock.Setup(s => s.CreateOrderAsync(_testUserId, It.IsAny<string>(), request))
                 .ThrowsAsync(new ArgumentException("Invalid coupon code"));
 
             // Act
