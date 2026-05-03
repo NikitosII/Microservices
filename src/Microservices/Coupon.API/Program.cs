@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Coupon.API.Data;
 using Coupon.API.Services;
 using FluentValidation;
@@ -8,6 +9,12 @@ using EventBus.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+});
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddEndpointsApiExplorer();
