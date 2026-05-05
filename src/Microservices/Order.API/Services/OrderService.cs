@@ -41,7 +41,7 @@ namespace Order.API.Services
             {
                 var httpClient = _httpClient.CreateClient("ShoppingCartApi");
 
-                var response = await httpClient.GetAsync($"api/cart?userId={userId}");
+                var response = await httpClient.GetAsync($"api/v1/cart?userId={userId}");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -63,7 +63,7 @@ namespace Order.API.Services
             {
                 var httpClient = _httpClient.CreateClient("ShoppingCartApi");
 
-                await httpClient.DeleteAsync($"api/cart?userId={userId}");
+                await httpClient.DeleteAsync($"api/v1/cart?userId={userId}");
             }
             catch (Exception ex)
             {
@@ -78,7 +78,7 @@ namespace Order.API.Services
             foreach (var item in cartItems)
             {
                 var response = await httpClient.PutAsJsonAsync(
-                    $"api/products/{item.ProductId}/stock",
+                    $"api/v1/products/{item.ProductId}/stock",
                     new { Quantity = -item.Quantity }); // Negative to reduce stock
 
                 if (!response.IsSuccessStatusCode)
@@ -95,7 +95,7 @@ namespace Order.API.Services
             foreach (var item in orderItems)
             {
                 await httpClient.PutAsJsonAsync(
-                    $"api/products/{item.ProductId}/stock",
+                    $"api/v1/products/{item.ProductId}/stock",
                     new { Quantity = item.Quantity }); // Positive to return stock
             }
         }
@@ -107,7 +107,7 @@ namespace Order.API.Services
                 var httpClient = _httpClient.CreateClient("CouponApi");
 
                 var response = await httpClient.PostAsJsonAsync(
-                    "api/coupons/validate",
+                    "api/v1/coupons/validate",
                     new { Code = couponCode, OrderAmount = orderAmount });
 
                 if (response.IsSuccessStatusCode)
@@ -130,7 +130,7 @@ namespace Order.API.Services
             {
                 var httpClient = _httpClient.CreateClient("CouponApi");
 
-                await httpClient.PostAsync($"api/coupons/{couponId}/use", null);
+                await httpClient.PostAsync($"api/v1/coupons/{couponId}/use", null);
             }
             catch (Exception ex)
             {
