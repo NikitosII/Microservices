@@ -1,7 +1,7 @@
 {
   "Routes": [
     {
-      "DownstreamPathTemplate": "/api/products",
+      "DownstreamPathTemplate": "/api/v1/products",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -9,14 +9,14 @@
           "Port": 80
         }
       ],
-      "UpstreamPathTemplate": "/products",
+      "UpstreamPathTemplate": "/v1/products",
       "UpstreamHttpMethod": [ "GET", "POST" ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "IdentityApiKey"
       }
     },
     {
-      "DownstreamPathTemplate": "/api/products/{id}",
+      "DownstreamPathTemplate": "/api/v1/products/{id}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -24,14 +24,14 @@
           "Port": 80
         }
       ],
-      "UpstreamPathTemplate": "/products/{id}",
+      "UpstreamPathTemplate": "/v1/products/{id}",
       "UpstreamHttpMethod": [ "GET", "PUT", "DELETE" ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "IdentityApiKey"
       }
     },
     {
-      "DownstreamPathTemplate": "/api/coupons",
+      "DownstreamPathTemplate": "/api/v1/coupons",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -39,11 +39,11 @@
           "Port": 80
         }
       ],
-      "UpstreamPathTemplate": "/coupons",
+      "UpstreamPathTemplate": "/v1/coupons",
       "UpstreamHttpMethod": [ "GET", "POST" ]
     },
     {
-      "DownstreamPathTemplate": "/api/cart",
+      "DownstreamPathTemplate": "/api/v1/cart",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -51,11 +51,11 @@
           "Port": 80
         }
       ],
-      "UpstreamPathTemplate": "/cart",
+      "UpstreamPathTemplate": "/v1/cart",
       "UpstreamHttpMethod": [ "GET", "POST", "DELETE" ]
     },
     {
-      "DownstreamPathTemplate": "/api/orders",
+      "DownstreamPathTemplate": "/api/v1/orders",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -63,7 +63,7 @@
           "Port": 80
         }
       ],
-      "UpstreamPathTemplate": "/orders",
+      "UpstreamPathTemplate": "/v1/orders",
       "UpstreamHttpMethod": [ "GET", "POST" ]
     }
   ],
