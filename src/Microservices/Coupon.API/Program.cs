@@ -4,6 +4,7 @@ using Coupon.API.Services;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using Coupon.API.Consumers;
 using EventBus.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,17 +22,17 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 
-// Add DbContext
 builder.Services.AddDbContext<CouponContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("CouponDB")));
 
-// Add services
 builder.Services.AddScoped<ICouponService, CouponService>();
 
-// Add EventBus
-builder.Services.AddEventBus(builder.Configuration);
+builder.Services.AddEventBus(builder.Configuration, x =>
+{
+    x.AddConsumer<ValidateCouponConsumer>();
+    x.AddConsumer<ReleaseCouponConsumer>();
+});
 
-// Add CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -44,7 +45,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

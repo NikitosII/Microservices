@@ -152,6 +152,35 @@ namespace Product.API.Controllers
             }
         }
 
+
+        // Adjusts stock by delta (negative to decrement, positive to increment).
+        [HttpPut("{id}/stock")]
+        [AllowAnonymous] // service-to-service call; auth handled at gateway level
+        public async Task<IActionResult> UpdateStock(Guid id, [FromBody] StockUpdateRequest request)
+        {
+            try
+            {
+                var product = await _context.Entities.FindAsync(id);
+                if (product == null)
+                    return NotFound();
+
+                var newStock = product.Stock + request.Quantity;
+                if (newStock < 0)
+                    return BadRequest($"Insufficient stock. Available: {product.Stock}");
+
+                product.Stock = newStock;
+                product.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating stock for product {ProductId}", id);
+                return StatusCode(500, "An error occurred while updating product stock");
+            }
+        }
+
         [HttpGet("category/{category}")]
         [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<Products>>> GetByCategory(string category)

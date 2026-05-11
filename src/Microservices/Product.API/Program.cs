@@ -1,8 +1,10 @@
 using Asp.Versioning;
+using EventBus.Extensions;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Product.API.Consumers;
 using Product.API.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,9 +57,14 @@ builder.Services.AddSwaggerGen(options =>
 });
 builder.Services.AddHealthChecks();
 
-// Add DbContext
 builder.Services.AddDbContext<ProductContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("ProductDB")));
+
+builder.Services.AddEventBus(builder.Configuration, x =>
+{
+    x.AddConsumer<ReserveStockConsumer>();
+    x.AddConsumer<ReleaseStockConsumer>();
+});
 
 // Add Authentication
 builder.Services.AddAuthentication("Bearer")
@@ -80,7 +87,6 @@ builder.Services.AddAuthentication("Bearer")
 // Add Authorization
 builder.Services.AddAuthorization();
 
-// Add CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -93,7 +99,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
