@@ -4,6 +4,7 @@ using FluentValidation.AspNetCore;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Order.API.Consumers;
 using Order.API.Data;
 using Order.API.Services;
 
@@ -80,6 +81,8 @@ builder.Services.AddHttpClient("CouponApi", client =>
 
 builder.Services.AddMassTransit(x =>
 {
+    x.AddConsumer<FulfillOrderConsumer>();
+
     x.AddEntityFrameworkOutbox<OrderContext>(o =>
     {
         o.UsePostgres();

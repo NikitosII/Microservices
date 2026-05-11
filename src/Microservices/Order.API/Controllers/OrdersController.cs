@@ -82,31 +82,24 @@ namespace Order.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Orders>> CreateOrder([FromBody] CreateOrderRequest request)
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
                     return BadRequest(ModelState);
-                }
 
                 var userId = GetUserId();
                 var email = GetUserEmail();
-                var order = await _orderService.CreateOrderAsync(userId, email, request);
+                var correlationId = await _orderService.StartOrderSagaAsync(userId, email, request);
 
-                _logger.LogInformation("Order created with ID {OrderId} for user {UserId}", order.Id, userId);
-                return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
+                _logger.LogInformation("Order saga started: {CorrelationId} for user {UserId}", correlationId, userId);
+                return Accepted(new { correlationId });
             }
             catch (UnauthorizedAccessException ex)
             {
                 _logger.LogWarning(ex, "Unauthorized access attempt to create order");
                 return Unauthorized();
-            }
-            catch (ArgumentException ex)
-            {
-                _logger.LogWarning(ex, "Invalid argument when creating order");
-                return BadRequest(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
@@ -115,8 +108,8 @@ namespace Order.API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating order");
-                return StatusCode(500, "An error occurred while creating the order");
+                _logger.LogError(ex, "Error starting order saga");
+                return StatusCode(500, "An error occurred while placing the order");
             }
         }
 
