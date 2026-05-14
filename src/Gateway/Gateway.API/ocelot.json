@@ -65,6 +65,21 @@
       ],
       "UpstreamPathTemplate": "/v1/orders",
       "UpstreamHttpMethod": [ "GET", "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/v1/saga/orders/{correlationId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "orchestrator.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/v1/saga/orders/{correlationId}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "IdentityApiKey"
+      }
     }
   ],
   "GlobalConfiguration": {

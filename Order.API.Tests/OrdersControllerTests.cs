@@ -132,7 +132,7 @@ namespace Order.API.Tests
         #region CreateOrder Tests
 
         [TestMethod]
-        public async Task CreateOrder_ReturnsCreatedResult_WithValidRequest()
+        public async Task CreateOrder_ReturnsAccepted_WithCorrelationId()
         {
             // Arrange
             var request = new CreateOrderRequest
@@ -148,25 +148,17 @@ namespace Order.API.Tests
                 PaymentMethod = "CreditCard"
             };
 
-            var createdOrder = new Orders
-            {
-                Id = Guid.NewGuid(),
-                UserId = _testUserId,
-                OrderNumber = "ORD-NEW-001",
-                Status = Orders.OrderStatus.Pending,
-                TotalAmount = 150.00m
-            };
-
-            _orderServiceMock.Setup(s => s.CreateOrderAsync(_testUserId, It.IsAny<string>(), request))
-                .ReturnsAsync(createdOrder);
+            var correlationId = Guid.NewGuid();
+            _orderServiceMock.Setup(s => s.StartOrderSagaAsync(_testUserId, It.IsAny<string>(), request))
+                .ReturnsAsync(correlationId);
 
             // Act
             var result = await _controller.CreateOrder(request);
 
             // Assert
-            var createdResult = result.Result as CreatedAtActionResult;
-            Assert.IsNotNull(createdResult);
-            Assert.AreEqual(nameof(OrdersController.GetOrder), createdResult.ActionName);
+            var acceptedResult = result as AcceptedResult;
+            Assert.IsNotNull(acceptedResult);
+            Assert.AreEqual(202, acceptedResult.StatusCode);
         }
 
         [TestMethod]
@@ -179,38 +171,38 @@ namespace Order.API.Tests
                 PaymentMethod = "CreditCard"
             };
 
-            _orderServiceMock.Setup(s => s.CreateOrderAsync(_testUserId, It.IsAny<string>(), request))
+            _orderServiceMock.Setup(s => s.StartOrderSagaAsync(_testUserId, It.IsAny<string>(), request))
                 .ThrowsAsync(new InvalidOperationException("Cart is empty"));
 
             // Act
             var result = await _controller.CreateOrder(request);
 
             // Assert
-            var badRequestResult = result.Result as BadRequestObjectResult;
+            var badRequestResult = result as BadRequestObjectResult;
             Assert.IsNotNull(badRequestResult);
             Assert.AreEqual("Cart is empty", badRequestResult.Value);
         }
 
         [TestMethod]
-        public async Task CreateOrder_ReturnsBadRequest_WhenInvalidCoupon()
+        public async Task CreateOrder_ReturnsServerError_WhenUnexpectedExceptionOccurs()
         {
             // Arrange
             var request = new CreateOrderRequest
             {
                 ShippingAddress = new ShippingAddress(),
-                PaymentMethod = "CreditCard",
-                CouponCode = "INVALID"
+                PaymentMethod = "CreditCard"
             };
 
-            _orderServiceMock.Setup(s => s.CreateOrderAsync(_testUserId, It.IsAny<string>(), request))
-                .ThrowsAsync(new ArgumentException("Invalid coupon code"));
+            _orderServiceMock.Setup(s => s.StartOrderSagaAsync(_testUserId, It.IsAny<string>(), request))
+                .ThrowsAsync(new Exception("Unexpected error"));
 
             // Act
             var result = await _controller.CreateOrder(request);
 
             // Assert
-            var badRequestResult = result.Result as BadRequestObjectResult;
-            Assert.IsNotNull(badRequestResult);
+            var objectResult = result as ObjectResult;
+            Assert.IsNotNull(objectResult);
+            Assert.AreEqual(500, objectResult.StatusCode);
         }
 
         #endregion

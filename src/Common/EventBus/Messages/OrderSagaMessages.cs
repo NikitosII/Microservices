@@ -113,9 +113,3 @@ public record OrderFulfillmentFailedEvent
     public Guid CorrelationId { get; init; }
     public string Reason { get; init; } = string.Empty;
 }
-
-public record CancelOrderCommand
-{
-    public Guid CorrelationId { get; init; }
-    public Guid OrderId { get; init; }
-}
