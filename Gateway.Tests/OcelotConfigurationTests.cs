@@ -24,38 +24,38 @@ namespace Gateway.Tests
                 var testConfig = @"{
                     ""Routes"": [
                         {
-                            ""DownstreamPathTemplate"": ""/api/products"",
+                            ""DownstreamPathTemplate"": ""/api/v1/products"",
                             ""DownstreamScheme"": ""http"",
                             ""DownstreamHostAndPorts"": [{ ""Host"": ""product.api"", ""Port"": 80 }],
-                            ""UpstreamPathTemplate"": ""/products"",
+                            ""UpstreamPathTemplate"": ""/v1/products"",
                             ""UpstreamHttpMethod"": [""GET"", ""POST""]
                         },
                         {
-                            ""DownstreamPathTemplate"": ""/api/products/{id}"",
+                            ""DownstreamPathTemplate"": ""/api/v1/products/{id}"",
                             ""DownstreamScheme"": ""http"",
                             ""DownstreamHostAndPorts"": [{ ""Host"": ""product.api"", ""Port"": 80 }],
-                            ""UpstreamPathTemplate"": ""/products/{id}"",
+                            ""UpstreamPathTemplate"": ""/v1/products/{id}"",
                             ""UpstreamHttpMethod"": [""GET"", ""PUT"", ""DELETE""]
                         },
                         {
-                            ""DownstreamPathTemplate"": ""/api/coupons"",
+                            ""DownstreamPathTemplate"": ""/api/v1/coupons"",
                             ""DownstreamScheme"": ""http"",
                             ""DownstreamHostAndPorts"": [{ ""Host"": ""coupon.api"", ""Port"": 80 }],
-                            ""UpstreamPathTemplate"": ""/coupons"",
+                            ""UpstreamPathTemplate"": ""/v1/coupons"",
                             ""UpstreamHttpMethod"": [""GET"", ""POST""]
                         },
                         {
-                            ""DownstreamPathTemplate"": ""/api/cart"",
+                            ""DownstreamPathTemplate"": ""/api/v1/cart"",
                             ""DownstreamScheme"": ""http"",
                             ""DownstreamHostAndPorts"": [{ ""Host"": ""shoppingcart.api"", ""Port"": 80 }],
-                            ""UpstreamPathTemplate"": ""/cart"",
+                            ""UpstreamPathTemplate"": ""/v1/cart"",
                             ""UpstreamHttpMethod"": [""GET"", ""POST"", ""DELETE""]
                         },
                         {
-                            ""DownstreamPathTemplate"": ""/api/orders"",
+                            ""DownstreamPathTemplate"": ""/api/v1/orders"",
                             ""DownstreamScheme"": ""http"",
                             ""DownstreamHostAndPorts"": [{ ""Host"": ""order.api"", ""Port"": 80 }],
-                            ""UpstreamPathTemplate"": ""/orders"",
+                            ""UpstreamPathTemplate"": ""/v1/orders"",
                             ""UpstreamHttpMethod"": [""GET"", ""POST""]
                         }
                     ],
@@ -102,11 +102,11 @@ namespace Gateway.Tests
             // Act
             var routes = _ocelotConfig.RootElement.GetProperty("Routes").EnumerateArray();
             var productsRoute = routes.FirstOrDefault(r =>
-                r.GetProperty("UpstreamPathTemplate").GetString() == "/products");
+                r.GetProperty("UpstreamPathTemplate").GetString() == "/v1/products");
 
             // Assert
             Assert.AreNotEqual(default, productsRoute);
-            Assert.AreEqual("/api/products", productsRoute.GetProperty("DownstreamPathTemplate").GetString());
+            Assert.AreEqual("/api/v1/products", productsRoute.GetProperty("DownstreamPathTemplate").GetString());
             Assert.AreEqual("product.api", productsRoute.GetProperty("DownstreamHostAndPorts")[0].GetProperty("Host").GetString());
         }
 
@@ -116,11 +116,11 @@ namespace Gateway.Tests
             // Act
             var routes = _ocelotConfig.RootElement.GetProperty("Routes").EnumerateArray();
             var couponsRoute = routes.FirstOrDefault(r =>
-                r.GetProperty("UpstreamPathTemplate").GetString() == "/coupons");
+                r.GetProperty("UpstreamPathTemplate").GetString() == "/v1/coupons");
 
             // Assert
             Assert.AreNotEqual(default, couponsRoute);
-            Assert.AreEqual("/api/coupons", couponsRoute.GetProperty("DownstreamPathTemplate").GetString());
+            Assert.AreEqual("/api/v1/coupons", couponsRoute.GetProperty("DownstreamPathTemplate").GetString());
             Assert.AreEqual("coupon.api", couponsRoute.GetProperty("DownstreamHostAndPorts")[0].GetProperty("Host").GetString());
         }
 
@@ -130,11 +130,11 @@ namespace Gateway.Tests
             // Act
             var routes = _ocelotConfig.RootElement.GetProperty("Routes").EnumerateArray();
             var cartRoute = routes.FirstOrDefault(r =>
-                r.GetProperty("UpstreamPathTemplate").GetString() == "/cart");
+                r.GetProperty("UpstreamPathTemplate").GetString() == "/v1/cart");
 
             // Assert
             Assert.AreNotEqual(default, cartRoute);
-            Assert.AreEqual("/api/cart", cartRoute.GetProperty("DownstreamPathTemplate").GetString());
+            Assert.AreEqual("/api/v1/cart", cartRoute.GetProperty("DownstreamPathTemplate").GetString());
             Assert.AreEqual("shoppingcart.api", cartRoute.GetProperty("DownstreamHostAndPorts")[0].GetProperty("Host").GetString());
         }
 
@@ -144,11 +144,11 @@ namespace Gateway.Tests
             // Act
             var routes = _ocelotConfig.RootElement.GetProperty("Routes").EnumerateArray();
             var ordersRoute = routes.FirstOrDefault(r =>
-                r.GetProperty("UpstreamPathTemplate").GetString() == "/orders");
+                r.GetProperty("UpstreamPathTemplate").GetString() == "/v1/orders");
 
             // Assert
             Assert.AreNotEqual(default, ordersRoute);
-            Assert.AreEqual("/api/orders", ordersRoute.GetProperty("DownstreamPathTemplate").GetString());
+            Assert.AreEqual("/api/v1/orders", ordersRoute.GetProperty("DownstreamPathTemplate").GetString());
             Assert.AreEqual("order.api", ordersRoute.GetProperty("DownstreamHostAndPorts")[0].GetProperty("Host").GetString());
         }
 
@@ -162,7 +162,7 @@ namespace Gateway.Tests
             // Act
             var routes = _ocelotConfig.RootElement.GetProperty("Routes").EnumerateArray();
             var productsRoute = routes.FirstOrDefault(r =>
-                r.GetProperty("UpstreamPathTemplate").GetString() == "/products");
+                r.GetProperty("UpstreamPathTemplate").GetString() == "/v1/products");
             var methods = productsRoute.GetProperty("UpstreamHttpMethod").EnumerateArray()
                 .Select(m => m.GetString()).ToList();
 
@@ -177,7 +177,7 @@ namespace Gateway.Tests
             // Act
             var routes = _ocelotConfig.RootElement.GetProperty("Routes").EnumerateArray();
             var productsRoute = routes.FirstOrDefault(r =>
-                r.GetProperty("UpstreamPathTemplate").GetString() == "/products/{id}");
+                r.GetProperty("UpstreamPathTemplate").GetString() == "/v1/products/{id}");
             var methods = productsRoute.GetProperty("UpstreamHttpMethod").EnumerateArray()
                 .Select(m => m.GetString()).ToList();
 
@@ -193,7 +193,7 @@ namespace Gateway.Tests
             // Act
             var routes = _ocelotConfig.RootElement.GetProperty("Routes").EnumerateArray();
             var cartRoute = routes.FirstOrDefault(r =>
-                r.GetProperty("UpstreamPathTemplate").GetString() == "/cart");
+                r.GetProperty("UpstreamPathTemplate").GetString() == "/v1/cart");
             var methods = cartRoute.GetProperty("UpstreamHttpMethod").EnumerateArray()
                 .Select(m => m.GetString()).ToList();
 

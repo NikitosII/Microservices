@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -6,8 +7,9 @@ using Product.API.Models;
 
 namespace Product.API.Controllers
 {
+    [ApiVersion("1.0")]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize]
     public class ProductsController : ControllerBase
     {
@@ -147,6 +149,35 @@ namespace Product.API.Controllers
             {
                 _logger.LogError(ex, "Error deleting product with ID {ProductId}", id);
                 return StatusCode(500, "An error occurred while deleting the product");
+            }
+        }
+
+
+        // Adjusts stock by delta (negative to decrement, positive to increment).
+        [HttpPut("{id}/stock")]
+        [AllowAnonymous] // service-to-service call; auth handled at gateway level
+        public async Task<IActionResult> UpdateStock(Guid id, [FromBody] StockUpdateRequest request)
+        {
+            try
+            {
+                var product = await _context.Entities.FindAsync(id);
+                if (product == null)
+                    return NotFound();
+
+                var newStock = product.Stock + request.Quantity;
+                if (newStock < 0)
+                    return BadRequest($"Insufficient stock. Available: {product.Stock}");
+
+                product.Stock = newStock;
+                product.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating stock for product {ProductId}", id);
+                return StatusCode(500, "An error occurred while updating product stock");
             }
         }
 

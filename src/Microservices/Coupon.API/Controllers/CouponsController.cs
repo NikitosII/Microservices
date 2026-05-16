@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Coupon.API.Data;
 using Coupon.API.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -5,8 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coupon.API.Controllers
 {
+    [ApiVersion("1.0")]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     public class CouponsController : ControllerBase
     {
         private readonly CouponContext _context;

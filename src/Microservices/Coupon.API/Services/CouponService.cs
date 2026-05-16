@@ -14,6 +14,7 @@ namespace Coupon.API.Services
         Task<bool> DeleteCouponAsync(Guid id);
         Task<CouponResponse> ValidateCouponAsync(string code, decimal orderAmount);
         Task<bool> UseCouponAsync(Guid couponId);
+        Task<bool> ReleaseCouponAsync(Guid couponId);
         Task<IEnumerable<Coupons>> GetActiveCouponsAsync();
     }
     public class CouponService : ICouponService
@@ -265,6 +266,23 @@ namespace Coupon.API.Services
                 _logger.LogError($"{ex.Message}");
                 throw;
             }
+        }
+
+        public async Task<bool> ReleaseCouponAsync(Guid couponId)
+        {
+            var coupon = await _context.Coupons.FindAsync(couponId);
+            if (coupon is null)
+                return false;
+
+            if (coupon.UsedCount > 0)
+            {
+                coupon.UsedCount--;
+                coupon.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Coupon released: {CouponId}, UsedCount now {UsedCount}", couponId, coupon.UsedCount);
+            }
+
+            return true;
         }
 
         public async Task<IEnumerable<Coupons>> GetActiveCouponsAsync()

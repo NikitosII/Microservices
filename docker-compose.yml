@@ -5,7 +5,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=1111
-      - POSTGRES_MULTIPLE_DATABASES=IdentityDb,ProductDb,CouponDb,ShoppingCartDb,OrderDb,PaymentDb
+      - POSTGRES_MULTIPLE_DATABASES=IdentityDb,ProductDb,CouponDb,ShoppingCartDb,OrderDb,PaymentDb,OrchestratorDb
     ports:
       - "5432:5432"
     volumes:
@@ -56,6 +56,7 @@ services:
       - coupon.api
       - shoppingcart.api
       - order.api
+      - orchestrator.api
     networks:
       - microservices-network
 
@@ -161,6 +162,28 @@ services:
       - ShoppingCartApi__BaseUrl=http://shoppingcart.api:80
       - ProductApi__BaseUrl=http://product.api:80
       - CouponApi__BaseUrl=http://coupon.api:80
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  orchestrator.api:
+    build:
+      context: .
+      dockerfile: src/Microservices/Orchestrator.API/Dockerfile
+    container_name: orchestrator.api
+    ports:
+      - "5006:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__OrchestratorDB=Host=postgres;Port=5432;Database=OrchestratorDb;Username=postgres;Password=1111
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Username=admin
       - RabbitMQ__Password=admin

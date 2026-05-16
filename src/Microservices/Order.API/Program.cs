@@ -1,17 +1,22 @@
-using EventBus.Extensions;
+using Asp.Versioning;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Order.API.Consumers;
 using Order.API.Data;
 using Order.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
 builder.Services.AddControllers();
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+});
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddEndpointsApiExplorer();
@@ -52,11 +57,9 @@ builder.Services.AddSwaggerGen(options =>
 });
 builder.Services.AddHealthChecks();
 
-// Add DbContext
 builder.Services.AddDbContext<OrderContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("OrderDB")));
 
-// Add HttpClient for calling Order API
 builder.Services.AddHttpClient("ShoppingCartApi", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ShoppingCartApi:BaseUrl"]);
@@ -76,13 +79,33 @@ builder.Services.AddHttpClient("CouponApi", client =>
 });
 
 
-// Add EventBus
-builder.Services.AddEventBus(builder.Configuration);
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<FulfillOrderConsumer>();
 
-// Add services
+    x.AddEntityFrameworkOutbox<OrderContext>(o =>
+    {
+        o.UsePostgres();
+        o.UseBusOutbox();
+    });
+
+    x.SetKebabCaseEndpointNameFormatter();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(builder.Configuration["RabbitMQ:Host"], h =>
+        {
+            h.Username(builder.Configuration["RabbitMQ:Username"]);
+            h.Password(builder.Configuration["RabbitMQ:Password"]);
+        });
+
+        cfg.ConfigureEndpoints(context);
+    });
+});
+
+
 builder.Services.AddScoped<IOrderService, OrderService>();
 
-// Add Authentication
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
@@ -101,10 +124,8 @@ builder.Services.AddAuthentication("Bearer")
     });
 
 
-// Add Authorization
 builder.Services.AddAuthorization();
 
-// Add CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>

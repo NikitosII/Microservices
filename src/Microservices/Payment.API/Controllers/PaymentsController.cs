@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Payment.API.Models;
@@ -5,8 +6,9 @@ using Payment.API.Services;
 
 namespace Payment.API.Controllers
 {
+    [ApiVersion("1.0")]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize]
     public class PaymentsController : ControllerBase
     {
