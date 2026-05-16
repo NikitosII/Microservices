@@ -1,4 +1,8 @@
+using Asp.Versioning;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Payment.API.Data;
+using Payment.API.EventHandlers;
 using Payment.API.Services;
 using EventBus.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +12,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+});
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -60,8 +72,11 @@ builder.Services.AddHttpClient("OrderApi", client =>
 // Add services
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
-// Add EventBus
-builder.Services.AddEventBus(builder.Configuration);
+// Add EventBus with consumer for OrderCreatedEvent
+builder.Services.AddEventBus(builder.Configuration, x =>
+{
+    x.AddConsumer<OrderCreatedEventHandler>();
+});
 
 // Add Authentication
 builder.Services.AddAuthentication("Bearer")
