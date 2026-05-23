@@ -2,9 +2,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gateway.API.Controllers
 {
+    /// <summary>
+    /// Health-check controller for the API Gateway.
+    /// Route: /api/health
+    /// <list type="bullet">
+    ///   <item>GET /       — liveness probe; returns service name, version, and timestamp.</item>
+    ///   <item>GET /ready  — readiness probe; returns 503 on error.</item>
+    ///   <item>GET /live   — lightweight alive check used by container orchestrators.</item>
+    /// </list>
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    public class HealthController : ControllerBase 
+    public class HealthController : ControllerBase
     {
         private readonly ILogger<HealthController> _logger;
         public HealthController(ILogger<HealthController> logger){

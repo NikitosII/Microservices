@@ -1,6 +1,6 @@
 # Microservices E-Commerce Platform
 
-A microservices-based platform built with ASP.NET Core 8.0, featuring a real-time monitoring dashboard, event-driven architecture with RabbitMQ, and API documentation via Swagger.
+A microservices-based platform built with ASP.NET Core 8.0, featuring a real-time monitoring dashboard, event-driven architecture with RabbitMQ, saga orchestration, and API documentation via Swagger.
 
 ## Project Overview
 
@@ -9,19 +9,24 @@ This project demonstrates a microservices architecture implementing an e-commerc
 - **User Authentication** - JWT-based authentication using Duende IdentityServer
 - **Product Catalog** - Product management with categories and inventory tracking
 - **Shopping Cart** - User cart management with product validation
-- **Coupon System** - Discount coupons with validation and usage limits
-- **Order Processing** - Order creation with coupon application and status tracking
+- **Coupon System** - Discount coupons with validation, usage limits, and saga-safe release
+- **Order Placement (Saga)** - Distributed order flow orchestrated by a MassTransit saga state machine: stock reservation → coupon validation (parallel) → order creation; compensating releases on any failure
 - **Payment Processing** - Payment handling with event-driven notifications
+- **API Versioning** - URL-based versioning (`/api/v{version}/`) across all services via Asp.Versioning.Mvc
+- **Transactional Outbox** - MassTransit EF Core outbox in Order.API and Orchestrator.API ensures at-least-once delivery without dual-write risk
+- **Input Validation** - FluentValidation auto-validation on all write endpoints
 - **Event-Driven Communication** - Asynchronous messaging via RabbitMQ and MassTransit
 
 ## Technology Stack
 
 - **Backend**: ASP.NET Core 8.0, Entity Framework Core
-- **Database**: PostgreSQL 16
+- **Database**: PostgreSQL
 - **Message Broker**: RabbitMQ with MassTransit
+- **Saga Orchestration**: MassTransit `MassTransitStateMachine` with EF Core repository and optimistic concurrency (`ISagaVersion`)
 - **API Gateway**: Ocelot
 - **Authentication**: Duende IdentityServer, JWT
-- **Frontend**: React 18, Vite, TailwindCSS
+- **Validation**: FluentValidation with auto-validation
+- **Frontend**: React 18, Vite
 - **Containerization**: Docker, Docker Compose
 - **Testing**: MSTest, Moq
 
@@ -52,17 +57,58 @@ The script will start all microservices and open the dashboard at: **http://loca
 
 | Service | Port | Description | Swagger UI |
 |---------|------|-------------|------------|
-| **Gateway.API** | 5000 | API Gateway (Ocelot) - routes requests | http://localhost:5000/swagger |
-| **Identity.API** | 5001 | Authentication & authorization | http://localhost:5001/swagger |
-| **Product.API** | 5002 | Product catalog management | http://localhost:5002/swagger |
-| **Coupon.API** | 5003 | Discount coupons management | http://localhost:5003/swagger |
+| **Gateway.API** | 5000 | API Gateway (Ocelot) — routes all requests, exposes saga status endpoint | http://localhost:5000/swagger |
+| **Identity.API** | 5001 | Authentication & authorization (Duende IdentityServer) | http://localhost:5001/swagger |
+| **Product.API** | 5002 | Product catalog | http://localhost:5002/swagger |
+| **Coupon.API** | 5003 | Discount coupons | http://localhost:5003/swagger |
 | **ShoppingCart.API** | 5004 | Shopping cart operations | http://localhost:5004/swagger |
-| **Order.API** | 5005 | Order processing | http://localhost:5005/swagger |
+| **Order.API** | 5005 | Starts saga, fulfills orders, manages order status | http://localhost:5005/swagger |
+| **Orchestrator.API** | 5006 | Saga state machine + status polling endpoint | http://localhost:5006/swagger |
 | **Payment.API** | 5007 | Payment processing | http://localhost:5007/swagger |
+
+### Order Placement Flow (Saga)
+
+```
+Client → POST /api/v1/orders
+                │
+                │ returns 202 Accepted { correlationId }
+                │
+                ▼
+         Order.API publishes OrderPlacedCommand
+                │
+                │
+         Orchestrator.API (saga)
+            ┌───┴───────────────────────┐
+            │                           │
+       ReserveStockCommand        ValidateCouponCommand
+       → Product.API              → Coupon.API (only if coupon present)
+            │                           │
+       StockReservedEvent         CouponValidatedEvent
+            └───────────┬───────────────┘
+                        │
+                        │ (both flags true)
+                        │
+                  FulfillOrderCommand
+                  → Order.API (DB transaction + outbox)
+                        │
+                        │
+                  OrderFulfilledEvent  →  saga Completed
+                  OrderCreatedEvent    →  Payment.API (Pending record)
+```
+
+On any failure the saga publishes compensating `ReleaseStockCommand` and/or `ReleaseCouponCommand`.
 
 ## Unit Tests
 
-The project includes unit tests across 4 test projects covering controllers, services, models, and gateway configuration.
+The project includes unit tests across 5 test projects covering controllers, services, models, gateway configuration, and saga state machine behaviour.
+
+| Project | Tests | Covers |
+|---------|-------|--------|
+| `Product.API.Tests` | 19 | Controller, service, model |
+| `Order.API.Tests` | 36 | Controller (incl. 202 saga start), service |
+| `ShoppingCart.API.Tests` | 27 | Cart controller and service |
+| `Gateway.Tests` | 13 | Ocelot route configuration |
+| `Orchestrator.Tests` | 4 | Saga state machine |
 
 ## Testing the APIs
 
@@ -77,24 +123,22 @@ See **[USAGE_GUIDE.md](USAGE_GUIDE.md)** for complete API documentation and exam
 Microservices/
 ├── src/
 │   ├── Common/
-│   │   └── EventBus/              # Shared event bus (MassTransit + RabbitMQ)
+│   │   └── EventBus/              # Shared contracts (OrderSagaMessages) + AddEventBus extension
 │   ├── Gateway/
-│   │   └── Gateway.API/           # Ocelot API Gateway
+│   │   └── Gateway.API/           # Ocelot API Gateway + health endpoints
 │   ├── Identity/
-│   │   └── Identity.API/          # IdentityServer authentication
+│   │   └── Identity.API/          # Duende IdentityServer authentication
 │   └── Microservices/
-│       ├── Product.API/           # Product catalog
-│       ├── Coupon.API/            # Coupon management
-│       ├── ShoppingCart.API/      # Shopping cart
-│       ├── Order.API/             # Order processing
-│       └── Payment.API/           # Payment processing
-├── Product.API.Tests/             # Product API unit tests (19 tests)
-├── Order.API.Tests/               # Order API unit tests (36 tests)
-├── ShoppingCart.API.Tests/        # Shopping Cart API unit tests (27 tests)
-├── Gateway.Tests/                 # Gateway configuration tests (13 tests)
-├── client-app/                    # React dashboard (Vite)
-├── docker-compose.yml             # Container orchestration
-├── MicroservicesECommerce.sln     # Solution file (includes all test projects)
+│       ├── Product.API/           # Product catalog; ReserveStock/ReleaseStock consumers
+│       ├── Coupon.API/            # Coupon management; ValidateCoupon/ReleaseCoupon consumers
+│       ├── ShoppingCart.API/      # Shopping cart (cleared after order fulfilment)
+│       ├── Order.API/             # StartOrderSagaAsync + FulfillOrderConsumer (outbox)
+│       ├── Orchestrator.API/      # Saga state machine + SagaController (status polling)
+│       └── Payment.API/           # Payment processing; OrderCreatedEventHandler
+├── tests/
+├── client-app/                    # React 18/Vite dashboard — health + metrics polling every 10 s
+├── docker-compose.yml             # All services + OrchestratorDb + RabbitMQ
+├── MicroservicesECommerce.sln     # Solution file (all projects registered)
 ├── launch.ps1                     # Windows launch script
 ├── launch.sh                      # Linux/Mac launch script
 └── USAGE_GUIDE.md                 # Detailed API documentation

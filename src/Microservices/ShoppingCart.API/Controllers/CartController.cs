@@ -6,6 +6,19 @@ using ShoppingCart.API.Services;
 
 namespace ShoppingCart.API.Controllers
 {
+    /// <summary>
+    /// HTTP controller for the user's shopping cart.
+    /// Route: /api/v1/cart  (JWT required)
+    /// <list type="bullet">
+    ///   <item>GET /            — get or create the caller's cart.</item>
+    ///   <item>GET /count       — total item quantity across all line items.</item>
+    ///   <item>POST /items      — add a product (or merge quantity if already present).</item>
+    ///   <item>PUT /items/{id}  — update quantity; removes item if quantity ≤ 0.</item>
+    ///   <item>DELETE /items/{id} — remove a single line item.</item>
+    ///   <item>DELETE /         — clear the entire cart (also called internally by FulfillOrderConsumer).</item>
+    /// </list>
+    /// GetUserId — extracts the 'sub' JWT claim.
+    /// </summary>
     [ApiVersion("1.0")]
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]

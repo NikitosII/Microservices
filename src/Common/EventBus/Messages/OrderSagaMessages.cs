@@ -1,3 +1,4 @@
+// Saga contracts shared between all participating microservices via RabbitMQ.
 namespace EventBus.Messages;
 
 // ----- Value objects carried in commands -----

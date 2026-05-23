@@ -1,3 +1,15 @@
+/**
+ * App.jsx — Root component for the Microservices Dashboard.
+ *
+ * State: services (health status for 7 APIs), metrics (product/order/coupon counts), lastUpdate.
+ *
+ * checkServiceHealth(service) — GETs /api/health and returns 'healthy' | 'unhealthy' | 'offline'.
+ * fetchMetrics()              — Pulls item counts from Product, Order, and Coupon APIs.
+ * checkAllServices()          — Runs health checks in parallel via Promise.all and refreshes state.
+ * useEffect                   — Runs on mount; sets a 10-second auto-refresh interval.
+ *
+ * Renders: MetricsCard ×4 (products, orders, coupons, services) and ServiceCard ×7.
+ */
 import { useState, useEffect } from 'react'
 import './App.css'
 import ServiceCard from './components/ServiceCard'

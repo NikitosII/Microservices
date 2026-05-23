@@ -4,6 +4,12 @@ using Orchestrator.API.StateMachines;
 
 namespace Orchestrator.API.Data;
 
+/// <summary>
+/// EF Core database context for the Orchestrator service (OrchestratorDb).
+/// Tables: OrderSagas — saga state rows keyed by CorrelationId.
+/// Outbox tables (AddOutboxMessageEntity, AddOutboxStateEntity, AddInboxStateEntity) are added
+/// by MassTransit to support transactional message delivery from the saga.
+/// </summary>
 public class OrchestratorContext : DbContext
 {
     public OrchestratorContext(DbContextOptions<OrchestratorContext> options) : base(options) { }

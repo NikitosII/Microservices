@@ -6,6 +6,18 @@ using Payment.API.Services;
 
 namespace Payment.API.Controllers
 {
+    /// <summary>
+    /// HTTP controller for payment operations.
+    /// Route: /api/v1/payments  (JWT required except the Stripe webhook endpoint)
+    /// <list type="bullet">
+    ///   <item>POST /                  — process a payment for an order (validates amount against Order.API).</item>
+    ///   <item>GET /{id}               — get payment by id.</item>
+    ///   <item>GET /order/{orderId}    — get payment by order id.</item>
+    ///   <item>POST /{id}/refund       — admin-only refund.</item>
+    ///   <item>POST /webhook/stripe    — anonymous Stripe webhook receiver (stub).</item>
+    /// </list>
+    /// GetUserId — extracts the 'sub' JWT claim.
+    /// </summary>
     [ApiVersion("1.0")]
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]

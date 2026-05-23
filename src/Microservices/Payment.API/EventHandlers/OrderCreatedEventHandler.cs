@@ -5,6 +5,11 @@ using Payment.API.Models;
 
 namespace Payment.API.EventHandlers
 {
+    /// <summary>
+    /// Consumes <see cref="OrderCreatedEvent"/> published by Order.API via the MassTransit outbox.
+    /// Creates a Pending payment record in PaymentDb for the new order so the payment flow can begin.
+    /// Idempotent: skips creation if a payment record for the same OrderId already exists.
+    /// </summary>
     public class OrderCreatedEventHandler : IConsumer<OrderCreatedEvent>
     {
         private readonly PaymentContext _context;

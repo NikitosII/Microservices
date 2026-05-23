@@ -4,6 +4,12 @@ using MassTransit;
 
 namespace Coupon.API.Consumers;
 
+/// <summary>
+/// Consumes <see cref="ValidateCouponCommand"/> from the orchestrator saga (parallel with stock reservation).
+/// Calls <see cref="ICouponService.ValidateCouponAsync"/> then <see cref="ICouponService.UseCouponAsync"/>
+/// to atomically reserve the usage slot.
+/// Publishes <see cref="CouponValidatedEvent"/> on success, or <see cref="CouponValidationFailedEvent"/> on failure.
+/// </summary>
 public class ValidateCouponConsumer : IConsumer<ValidateCouponCommand>
 {
     private readonly ICouponService _couponService;

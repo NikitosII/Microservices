@@ -1,3 +1,7 @@
+/**
+ * MetricsCard.jsx — Display card for a single system metric.
+ * Props: title (label), value (count or ratio string), icon (emoji), color (accent hex).
+ */
 import './MetricsCard.css'
 
 function MetricsCard({ title, value, icon, color }) {

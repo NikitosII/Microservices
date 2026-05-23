@@ -5,6 +5,20 @@ using Payment.API.Models;
 
 namespace Payment.API.Services
 {
+    /// <summary>
+    /// Payment processing service backed by PaymentDb.
+    /// <list type="bullet">
+    ///   <item>ProcessPaymentAsync   — validates order amount, dispatches to method-specific processor
+    ///         (CreditCard, PayPal, BankTransfer, CashOnDelivery), persists the result, and syncs order status.</item>
+    ///   <item>GetPaymentByIdAsync / GetPaymentByOrderIdAsync — read operations.</item>
+    ///   <item>RefundPaymentAsync    — validates refund eligibility (Completed only, amount ≤ original),
+    ///         calls the gateway mock, and updates order status.</item>
+    ///   <item>UpdatePaymentStatusAsync — direct status update, also syncs order payment status via HTTP.</item>
+    ///   <item>ProcessStripeWebhookAsync — stub for future Stripe webhook integration.</item>
+    /// </list>
+    /// Private helpers: GetOrderDetailsAsync, UpdateOrderPaymentStatusAsync, UpdateOrderRefundStatusAsync,
+    /// and four mock payment-gateway methods (each with a 100 ms simulated delay).
+    /// </summary>
     public interface IPaymentService
     {
         Task<PaymentResponse> ProcessPaymentAsync(Guid userId, PaymentRequest request);

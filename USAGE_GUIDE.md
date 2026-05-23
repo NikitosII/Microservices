@@ -8,6 +8,7 @@ This guide provides detailed instructions for testing and interacting with all m
 - [Using Swagger UI](#using-swagger-ui)
 - [Authentication & Authorization](#authentication--authorization)
 - [API Reference](#api-reference)
+- [Order Placement Flow (Saga)](#order-placement-flow-saga)
 - [Unit Tests](#unit-tests)
 - [Troubleshooting](#troubleshooting)
 - [Service Endpoints Quick Reference](#service-endpoints-quick-reference)
@@ -46,7 +47,7 @@ The script will:
 
 ### Method 1: Dashboard (Recommended)
 Open **http://localhost:55585** in your browser to see:
-- Real-time health status of all 7 microservices
+- Real-time health status of all 8 microservices
 - Green checkmark = Healthy
 - Red X = Offline or Unhealthy
 - Auto-refresh every 10 seconds
@@ -62,6 +63,7 @@ Each service exposes a `/api/health` endpoint:
 | Coupon | http://localhost:5003/api/health |
 | Shopping Cart | http://localhost:5004/api/health |
 | Order | http://localhost:5005/api/health |
+| Orchestrator | http://localhost:5006/api/health |
 | Payment | http://localhost:5007/api/health |
 
 ### Method 3: Docker Commands
@@ -85,6 +87,7 @@ Each microservice has built-in Swagger documentation for easy API testing:
 | Coupon | http://localhost:5003/swagger |
 | Shopping Cart | http://localhost:5004/swagger |
 | Order | http://localhost:5005/swagger |
+| Orchestrator | http://localhost:5006/swagger |
 | Payment | http://localhost:5007/swagger |
 
 Open any Swagger URL to view endpoints, see models, and test APIs directly in the browser.
@@ -326,26 +329,31 @@ Invoke-RestMethod -Uri "http://localhost:5004/api/cart" -Headers $headers
 
 | Endpoint | Authentication Required | Admin Role Required |
 |----------|------------------------|---------------------|
-| **Product API** | | |
-| GET /api/products | ❌ No | ❌ No |
-| GET /api/products/{id} | ❌ No | ❌ No |
-| GET /api/products/category/{category} | ❌ No | ❌ No |
-| POST /api/products | ✅ Yes | ✅ Yes |
-| PUT /api/products/{id} | ✅ Yes | ✅ Yes |
-| DELETE /api/products/{id} | ✅ Yes | ✅ Yes |
-| **Coupon API** | | |
+| **Product API** (`/api/v1/products`) | | |
+| GET / | ❌ No | ❌ No |
+| GET /{id} | ❌ No | ❌ No |
+| GET /category/{category} | ❌ No | ❌ No |
+| PUT /{id}/stock | ❌ No | ❌ No |
+| POST / | ✅ Yes | ✅ Yes |
+| PUT /{id} | ✅ Yes | ✅ Yes |
+| DELETE /{id} | ✅ Yes | ✅ Yes |
+| **Coupon API** (`/api/v1/coupons`) | | |
 | All endpoints | ❌ No | ❌ No |
-| **Shopping Cart API** | | |
+| **Shopping Cart API** (`/api/v1/cart`) | | |
 | All endpoints | ✅ Yes | ❌ No |
-| **Order API** | | |
-| GET /api/orders | ✅ Yes | ❌ No |
-| GET /api/orders/{id} | ✅ Yes | ❌ No |
-| GET /api/orders/by-number/{orderNumber} | ✅ Yes | ❌ No |
-| POST /api/orders | ✅ Yes | ❌ No |
-| POST /api/orders/{id}/cancel | ✅ Yes | ❌ No |
-| PUT /api/orders/{id}/status | ✅ Yes | ✅ Yes |
-| **Payment API** | | |
-| All endpoints | ✅ Yes | ❌ No |
+| **Order API** (`/api/v1/orders`) | | |
+| GET / | ✅ Yes | ❌ No |
+| GET /{id} | ✅ Yes | ❌ No |
+| GET /by-number/{orderNumber} | ✅ Yes | ❌ No |
+| POST / (starts saga, returns 202) | ✅ Yes | ❌ No |
+| POST /{id}/cancel | ✅ Yes | ❌ No |
+| PUT /{id}/status | ✅ Yes | ✅ Yes |
+| **Orchestrator API** (`/api/v1/saga`) | | |
+| GET /orders/{correlationId} | ❌ No | ❌ No |
+| **Payment API** (`/api/v1/payments`) | | |
+| POST / | ✅ Yes | ❌ No |
+| GET /{id} | ✅ Yes | ❌ No |
+| GET /order/{orderId} | ✅ Yes | ❌ No |
 | **Identity API** | | |
 | POST /api/account/register | ❌ No | ❌ No |
 | POST /connect/token | ❌ No | ❌ No |
@@ -546,42 +554,61 @@ curl -X DELETE http://localhost:5004/api/cart/{productId} \
 
 #### Get User Orders
 ```bash
-curl http://localhost:5005/api/orders \
+curl http://localhost:5005/api/v1/orders \
   -H "Authorization: Bearer {token}"
 ```
 
 #### Get Order by ID
 ```bash
-curl http://localhost:5005/api/orders/{id} \
+curl http://localhost:5005/api/v1/orders/{id} \
   -H "Authorization: Bearer {token}"
 ```
 
 #### Get Order by Number
 ```bash
-curl http://localhost:5005/api/orders/by-number/{orderNumber} \
+curl http://localhost:5005/api/v1/orders/by-number/{orderNumber} \
   -H "Authorization: Bearer {token}"
 ```
 
-#### Create Order
+#### Place Order (starts saga — returns 202 Accepted)
+
+The cart must not be empty before placing an order.
+
 ```bash
-curl -X POST http://localhost:5005/api/orders \
+curl -X POST http://localhost:5005/api/v1/orders \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
-    "shippingAddress": "123 Main St, City, Country",
-    "couponCode": "SAVE20"
+    "paymentMethod": "CreditCard",
+    "couponCode": "SAVE20",
+    "shippingAddress": {
+      "fullName": "John Doe",
+      "street": "123 Main St",
+      "city": "New York",
+      "state": "NY",
+      "country": "USA",
+      "zipCode": "10001",
+      "phone": "+1-555-0100"
+    }
   }'
 ```
 
+**Response:** `202 Accepted`
+```json
+{ "correlationId": "3fa85f64-5717-4562-b3fc-2c963f66afa6" }
+```
+
+Use the `correlationId` to poll the saga status (see [Orchestrator API](#orchestrator-api) below).
+
 #### Cancel Order
 ```bash
-curl -X POST http://localhost:5005/api/orders/{id}/cancel \
+curl -X POST http://localhost:5005/api/v1/orders/{id}/cancel \
   -H "Authorization: Bearer {token}"
 ```
 
 #### Update Order Status (Admin Only)
 ```bash
-curl -X PUT http://localhost:5005/api/orders/{id}/status \
+curl -X PUT http://localhost:5005/api/v1/orders/{id}/status \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {admin-token}" \
   -d '{
@@ -589,7 +616,67 @@ curl -X PUT http://localhost:5005/api/orders/{id}/status \
   }'
 ```
 
-**Order Statuses:** `Pending`, `Confirmed`, `Processing`, `Shipped`, `Delivered`, `Cancelled`
+**Order Statuses:** `Pending`, `Confirmed`, `Processing`, `Shipped`, `Delivered`, `Cancelled`, `Refunded`
+
+**Valid status transitions:**
+- Pending → Confirmed, Cancelled
+- Confirmed → Processing, Cancelled
+- Processing → Shipped, Cancelled
+- Shipped → Delivered
+- Delivered → Refunded
+
+</details>
+
+<details>
+<summary><strong>Orchestrator API</strong> (click to expand)</summary>
+
+**Base URL:** http://localhost:5006
+
+The Orchestrator service runs the saga state machine. Its only HTTP endpoint lets clients poll the outcome of an order placement.
+
+#### Poll Saga Status
+
+```bash
+curl http://localhost:5006/api/v1/saga/orders/{correlationId}
+```
+
+**Response while in progress:**
+```json
+{
+  "correlationId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "currentState": "Submitted",
+  "orderId": null,
+  "failureReason": null,
+  "createdAt": "2026-05-23T10:00:00Z",
+  "updatedAt": "2026-05-23T10:00:01Z"
+}
+```
+
+**Response on success (`currentState` = "Completed"):**
+```json
+{
+  "correlationId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "currentState": "Completed",
+  "orderId": "a1b2c3d4-...",
+  "failureReason": null,
+  ...
+}
+```
+
+**Response on failure (`currentState` = "Failed"):**
+```json
+{
+  "correlationId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "currentState": "Failed",
+  "orderId": null,
+  "failureReason": "Stock: Product abc: available 0, requested 2",
+  ...
+}
+```
+
+**404 Not Found** is returned once the saga has finalized and been removed from the repository (this happens immediately after Completed or Failed is reached).
+
+**Saga states:** `Submitted` → `FulfillingOrder` → `Completed` | `Failed`
 
 </details>
 
@@ -636,17 +723,22 @@ curl -X POST http://localhost:5001/connect/token \
 
 The Gateway (http://localhost:5000) routes requests to backend services:
 
-| Gateway Route | Backend Service |
-|---------------|-----------------|
-| `/products` | Product API |
-| `/products/{id}` | Product API |
-| `/coupons` | Coupon API |
-| `/cart` | Shopping Cart API |
-| `/orders` | Order API |
+| Gateway Upstream Path | Backend Service |
+|-----------------------|-----------------|
+| `/v1/products` | Product API |
+| `/v1/products/{id}` | Product API |
+| `/v1/coupons` | Coupon API |
+| `/v1/cart` | Shopping Cart API |
+| `/v1/orders` | Order API |
+| `/v1/saga/orders/{correlationId}` | Orchestrator API |
 
 **Example via Gateway:**
 ```bash
-curl http://localhost:5000/products
+# Get products
+curl http://localhost:5000/v1/products
+
+# Poll saga status
+curl http://localhost:5000/v1/saga/orders/{correlationId}
 ```
 
 </details>
@@ -732,14 +824,37 @@ curl http://localhost:5003/api/coupons
    - **GET /api/cart** - View your cart
    - **POST /api/cart** - Add items to cart
 
-### 7. Test Order API (Requires Auth)
+### 7. Test Order API — Place an Order (Requires Auth)
 1. Open http://localhost:5005/swagger
 2. Click **"Authorize"** and paste your token
-3. Test endpoints:
-   - **GET /api/orders** - View your orders
-   - **POST /api/orders** - Create a new order from your cart
+3. **GET /api/v1/orders** — View your orders
+4. **POST /api/v1/orders** — Place a new order from your cart:
+   ```json
+   {
+     "paymentMethod": "CreditCard",
+     "shippingAddress": {
+       "fullName": "John Doe",
+       "street": "123 Main St",
+       "city": "New York",
+       "state": "NY",
+       "country": "USA",
+       "zipCode": "10001",
+       "phone": "+1-555-0100"
+     }
+   }
+   ```
+   The response is **202 Accepted** with a `correlationId`.
 
-### 8. Monitor with Dashboard
+### 8. Poll Saga Status
+Use the `correlationId` from step 7 to track the order:
+```powershell
+$correlationId = "paste-your-correlation-id-here"
+Invoke-RestMethod "http://localhost:5006/api/v1/saga/orders/$correlationId"
+```
+Poll every few seconds until `currentState` is `Completed` (check `orderId`) or `Failed` (check `failureReason`).
+A 404 means the saga finalized and the row was cleaned up — the order was either created or compensated.
+
+### 9. Monitor with Dashboard
 Keep http://localhost:55585 open to monitor service health and metrics.
 
 </details>
@@ -771,6 +886,7 @@ docker exec -it postgres psql -U postgres -W
 \c ProductDb
 \c CouponDb
 \c OrderDb
+\c OrchestratorDb   -- saga state + outbox tables
 
 # List tables
 \dt
@@ -778,6 +894,7 @@ docker exec -it postgres psql -U postgres -W
 # Query data
 SELECT * FROM "Products";
 SELECT * FROM "Coupons";
+SELECT * FROM "OrderSagas";    -- live saga instances (finalized rows are removed)
 ```
 
 </details>
@@ -865,16 +982,17 @@ npm run dev
 
 ## Unit Tests
 
-The project includes **95 unit tests** across 4 test projects, using **MSTest** with **Moq** for mocking and **EF Core InMemory** for database testing.
+The project includes **99 unit/integration tests** across 5 test projects, using **MSTest** with **Moq** for mocking, **EF Core InMemory** for database testing, and the **MassTransit Test Harness** for saga state machine tests.
 
 ### Test Projects Overview
 
 | Test Project | Tests | Test Files | Coverage Area |
 |-------------|-------|------------|--------------|
 | **Product.API.Tests** | 19 | ProductsControllerTests, ProductModelTests | CRUD operations, model defaults |
-| **Order.API.Tests** | 36 | OrdersControllerTests, OrderServiceTests, OrderModelTests | Endpoints, business logic, status transitions |
+| **Order.API.Tests** | 36 | OrdersControllerTests, OrderServiceTests, OrderModelTests | Endpoints (incl. 202 saga-start), business logic, status transitions |
 | **ShoppingCart.API.Tests** | 27 | CartControllerTests, CartServiceTests, CartModelTests | Endpoints, cart operations, price calculations |
 | **Gateway.Tests** | 13 | OcelotConfigurationTests | Route config, HTTP methods, downstream settings |
+| **Orchestrator.Tests** | 4 | OrderSagaStateMachineTests | Saga state machine transitions (in-memory MassTransit harness) |
 
 ### Running Tests
 
@@ -888,10 +1006,11 @@ dotnet test MicroservicesECommerce.sln
 
 **Run a specific test project:**
 ```bash
-dotnet test Product.API.Tests/Product.API.Tests.csproj
-dotnet test Order.API.Tests/Order.API.Tests.csproj
-dotnet test ShoppingCart.API.Tests/ShoppingCart.API.Tests.csproj
-dotnet test Gateway.Tests/Gateway.Tests.csproj
+dotnet test tests/Product.API.Tests/Product.API.Tests.csproj
+dotnet test tests/Order.API.Tests/Order.API.Tests.csproj
+dotnet test tests/ShoppingCart.API.Tests/ShoppingCart.API.Tests.csproj
+dotnet test tests/Gateway.Tests/Gateway.Tests.csproj
+dotnet test tests/Orchestrator.Tests/Orchestrator.Tests.csproj
 ```
 
 **Run with detailed output:**
@@ -982,6 +1101,17 @@ dotnet test MicroservicesECommerce.sln --verbosity detailed
 
 </details>
 
+<details>
+<summary><strong>Orchestrator.Tests (4 tests)</strong> (click to expand)</summary>
+
+**OrderSagaStateMachineTests (4 tests) — MassTransit in-memory test harness:**
+- `HappyPath_NoCoupon_PublishesReserveAndFulfillCommands` — order with no coupon: publishes `ReserveStockCommand`, receives `StockReservedEvent`, publishes `FulfillOrderCommand`.
+- `HappyPath_WithCoupon_PublishesBothParallelCommandsThenFulfills` — order with coupon: both `ReserveStockCommand` and `ValidateCouponCommand` published in parallel; after both events, `FulfillOrderCommand` is published.
+- `CouponValidationFailed_AfterStockReserved_PublishesReleaseStock` — if coupon fails after stock was already reserved, `ReleaseStockCommand` is published as compensation.
+- `FulfillmentFailed_PublishesReleaseStockAndReleaseCoupon` — if `OrderFulfillmentFailedEvent` is received, both `ReleaseStockCommand` and `ReleaseCouponCommand` are published.
+
+</details>
+
 ### Test Stack
 
 | Component | Package | Version |
@@ -989,6 +1119,7 @@ dotnet test MicroservicesECommerce.sln --verbosity detailed
 | Test Framework | MSTest | 3.1.1 |
 | Mocking | Moq | 4.20.70 |
 | In-Memory Database | Microsoft.EntityFrameworkCore.InMemory | 8.0.0 |
+| Saga Test Harness | MassTransit.Testing | 8.x |
 | Code Coverage | coverlet.collector | 6.0.0 |
 
 ---
@@ -1035,25 +1166,37 @@ docker-compose down -v
                     |   localhost:5000    |
                     +---------+-----------+
                               |
-       +----------+-----------+-----------+----------+
-       |          |           |           |          |
-+------v-----+ +--v---+ +-----v----+ +----v----+ +---v-----+
-|  Identity  | |Product| |  Coupon  | |  Cart   | |  Order  |
-|    :5001   | | :5002 | |   :5003  | |  :5004  | |  :5005  |
-+------+-----+ +--+---++ +-----+----+ +---+-----+ +---+-----+
-       |          |           |           |           |
-       +----------+-----------+-----------+----------+
-                  |                       |
-        +---------v-----------+ +---------v-----------+
-        |     PostgreSQL      | |      RabbitMQ       |
-        |   localhost:5432    | |   localhost:15672   |
-        +---------------------+ +---------------------+
-
+       +----------+-----------+-----------+----------+-----------+
+       |          |           |           |          |           |
++------v-----+ +--v---+ +-----v----+ +----v----+ +---v-----+ +-v---------+
+|  Identity  | |Product| |  Coupon  | |  Cart   | |  Order  | |Orchestrat.|
+|    :5001   | | :5002 | |   :5003  | |  :5004  | |  :5005  | |   :5006   |
++------------+ +--+---++ +-----+----+ +---------+ +---+-----+ +-----+-----+
+                  |           |                       |               |
+                  +-----+-----+           +-----------+               |
+                        |                |                            |
+              +---------v----------------v----------------------------v---+
+              |                      RabbitMQ                            |
+              |                  localhost:15672                         |
+              +-----+-------------+-------------+------------------------+
+                    |             |             |
+              +-----v-----+ +----v----+   +-----v------+
+              |Product.API| |Coupon.API|  |  Order.API |
+              |(consumers)| |(consumers)  |(consumers) |
+              +-----------+ +---------+   +------------+
+                    |             |             |
+              +-----v-------------v-------------v-----+
+              |             PostgreSQL                |
+              |           localhost:5432              |
+              +---------------------------------------+
 ```
 
 ---
 
 ## Service Endpoints Quick Reference
+
+All service APIs are versioned. The current version is **v1**; use `/api/v1/...` paths.
+`AssumeDefaultVersionWhenUnspecified = true` means unversioned paths like `/api/products` also work.
 
 | Service | Base URL | Swagger | Health |
 |---------|----------|---------|--------|
@@ -1063,4 +1206,5 @@ docker-compose down -v
 | Coupon | http://localhost:5003 | http://localhost:5003/swagger | http://localhost:5003/api/health |
 | Cart | http://localhost:5004 | http://localhost:5004/swagger | http://localhost:5004/api/health |
 | Order | http://localhost:5005 | http://localhost:5005/swagger | http://localhost:5005/api/health |
+| Orchestrator | http://localhost:5006 | http://localhost:5006/swagger | http://localhost:5006/api/health |
 | Payment | http://localhost:5007 | http://localhost:5007/swagger | http://localhost:5007/api/health |

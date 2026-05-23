@@ -6,6 +6,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coupon.API.Controllers
 {
+    /// <summary>
+    /// HTTP controller for coupon catalogue and validation.
+    /// Route: /api/v1/coupons  (no auth required — called by gateway and service-to-service)
+    /// Note: accesses CouponContext directly rather than through ICouponService (pre-existing pattern).
+    /// <list type="bullet">
+    ///   <item>GET /            — list active coupons.</item>
+    ///   <item>GET /{id}        — single coupon by id.</item>
+    ///   <item>POST /           — create coupon.</item>
+    ///   <item>POST /validate   — validate code against order amount; returns discount amount.</item>
+    ///   <item>POST /{id}/use   — increment UsedCount (reservation step).</item>
+    /// </list>
+    /// </summary>
     [ApiVersion("1.0")]
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]

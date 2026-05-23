@@ -7,6 +7,17 @@ using static Order.API.Models.Orders;
 
 namespace Order.API.Services
 {
+    /// <summary>
+    /// Order read/write service and saga trigger.
+    /// <list type="bullet">
+    ///   <item>GetByIdAsync / GetByNumberAsync / GetOrdersByUserIdAsync — read operations with Items included.</item>
+    ///   <item>StartOrderSagaAsync — reads the user's cart, publishes <see cref="EventBus.Messages.OrderPlacedCommand"/>
+    ///         to start the orchestrator saga, and returns the correlationId for polling.</item>
+    ///   <item>UpdateOrderStatusAsync — validates the transition against an allowed-transitions map, then saves
+    ///         and publishes <see cref="EventBus.Messages.OrderStatusUpdatedEvent"/>.</item>
+    ///   <item>CancelOrderAsync — user-initiated cancellation; returns stock via Product.API HTTP call.</item>
+    /// </list>
+    /// </summary>
     public interface IOrderService
     {
         Task<Orders?> GetByIdAsync(Guid id, Guid userId);

@@ -4,6 +4,10 @@ using Product.API.Data;
 
 namespace Product.API.Consumers;
 
+/// <summary>
+/// Consumes <see cref="ReleaseStockCommand"/> sent by the saga as a compensating action.
+/// Re-increments stock for each line item and saves in a single <see cref="Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync"/> call.
+/// </summary>
 public class ReleaseStockConsumer : IConsumer<ReleaseStockCommand>
 {
     private readonly ProductContext _context;

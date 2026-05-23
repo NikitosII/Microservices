@@ -4,6 +4,10 @@ using MassTransit;
 
 namespace Coupon.API.Consumers;
 
+/// <summary>
+/// Consumes sent by the saga as a compensating action.
+/// Decrements UsedCount via <see cref="ICouponService.ReleaseCouponAsync"/> to undo the earlier reservation.
+/// </summary>
 public class ReleaseCouponConsumer : IConsumer<ReleaseCouponCommand>
 {
     private readonly ICouponService _couponService;

@@ -5,17 +5,15 @@ namespace Identity.API
     public static class Config
     {
         public static IEnumerable<IdentityResource> IdentityResources =>
-            new IdentityResource[]
-            {
+            [
                 new IdentityResources.OpenId(),
                 new IdentityResources.Profile(),
                 new IdentityResources.Email(),
                 new IdentityResource("roles", new[] { "role" })
-            };
+            ];
 
         public static IEnumerable<ApiScope> ApiScopes =>
-            new ApiScope[]
-            {
+            [
                 new ApiScope("gateway", "Gateway API"),
                 new ApiScope("product.api", "Product API"),
                 new ApiScope("order.api", "Order API"),
@@ -23,11 +21,10 @@ namespace Identity.API
                 new ApiScope("email.api", "Email API"),
                 new ApiScope("payment.api", "Payment API"),
                 new ApiScope("coupon.api", "Coupon API")
-            };
+            ];
 
         public static IEnumerable<ApiResource> ApiResources =>
-            new ApiResource[]
-            {
+            [
                 new ApiResource("gateway", "Gateway API")
                 {
                     Scopes = { "gateway" },
@@ -63,11 +60,10 @@ namespace Identity.API
                     Scopes = { "coupon.api" },
                     UserClaims = { "role", "name", "email" }
                 }
-            };
+            ];
 
         public static IEnumerable<Client> Clients =>
-            new Client[]
-            {
+            [
                 // React client (SPA)
                 new Client
                 {
@@ -187,6 +183,6 @@ namespace Identity.API
                     AccessTokenLifetime = 3600, // 1 hour
                     AllowOfflineAccess = true
                 }
-            };
+            ];
     }
 }

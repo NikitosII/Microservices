@@ -4,6 +4,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coupon.API.Services
 {
+    /// <summary>
+    /// Coupon management service backed by CouponDb.
+    /// <list type="bullet">
+    ///   <item>GetCouponsAsync / GetByIdAsync / GetByCodeAsync / GetActiveCouponsAsync — read queries.</item>
+    ///   <item>CreateCouponAsync / UpdateCouponAsync / DeleteCouponAsync — CRUD (admin paths).</item>
+    ///   <item>ValidateCouponAsync — checks active, date range, usage cap, and minimum order amount;
+    ///         returns a <see cref="CouponResponse"/> with the computed discount amount.</item>
+    ///   <item>UseCouponAsync      — increments UsedCount (called by ValidateCouponConsumer to reserve usage).</item>
+    ///   <item>ReleaseCouponAsync  — decrements UsedCount (called by ReleaseCouponConsumer as saga compensation).</item>
+    /// </list>
+    /// Private helper: CalculateDiscount — handles Percentage (capped by MaximumDiscount) and Fixed types.
+    /// </summary>
     public interface ICouponService
     {
         Task<IEnumerable<Coupons>> GetCouponsAsync();

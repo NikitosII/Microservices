@@ -6,6 +6,19 @@ using Order.API.Services;
 
 namespace Order.API.Controllers
 {
+    /// <summary>
+    /// HTTP controller for order operations.
+    /// Route: /api/v1/orders  (JWT required for all endpoints)
+    /// <list type="bullet">
+    ///   <item>GET /                      — list caller's orders.</item>
+    ///   <item>GET /{id}                  — single order by id (scoped to caller).</item>
+    ///   <item>GET /by-number/{number}    — order lookup by order number.</item>
+    ///   <item>POST /                     — starts the order saga; returns 202 Accepted with correlationId for polling.</item>
+    ///   <item>PUT /{id}/status           — admin-only status update.</item>
+    ///   <item>POST /{id}/cancel          — user-initiated cancellation (Pending/Confirmed only).</item>
+    /// </list>
+    /// GetUserId / GetUserEmail — extract the 'sub' and 'email' claims from the JWT.
+    /// </summary>
     [ApiVersion("1.0")]
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]

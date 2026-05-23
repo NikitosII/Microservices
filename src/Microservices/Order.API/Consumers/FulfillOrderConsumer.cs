@@ -6,6 +6,18 @@ using Order.API.Models;
 
 namespace Order.API.Consumers;
 
+/// <summary>
+/// Consumes <see cref="FulfillOrderCommand"/> sent by the orchestrator saga once stock and coupon are confirmed.
+///
+/// After commit (best-effort, outside the transaction):
+///   - Calls ShoppingCart.API to clear the user's cart.
+///
+/// On any exception:
+///   - Rolls back the transaction.
+///   - Publishes <see cref="OrderFulfillmentFailedEvent"/> so the saga can compensate.
+///
+/// Helper: GenerateOrderNumber — produces a timestamped "ORD-yyyyMMddHHmmss-XXXX" string.
+/// </summary>
 public class FulfillOrderConsumer : IConsumer<FulfillOrderCommand>
 {
     private readonly OrderContext _context;

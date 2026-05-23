@@ -5,6 +5,14 @@ using Orchestrator.API.Data;
 
 namespace Orchestrator.API.Controllers;
 
+/// <summary>
+/// Exposes saga status for client-side polling after an order is submitted.
+/// Route: /api/v1/saga
+/// <list type="bullet">
+///   <item>GET orders/{correlationId} — returns CurrentState, OrderId, FailureReason, and timestamps.
+///         Returns 404 when the saga has already finalized and been removed from the repository.</item>
+/// </list>
+/// </summary>
 [ApiVersion("1.0")]
 [ApiController]
 [Route("api/v{version:apiVersion}/saga")]

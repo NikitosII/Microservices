@@ -5,6 +5,12 @@ using Product.API.Data;
 
 namespace Product.API.Consumers;
 
+/// <summary>
+/// Consumes <see cref="ReserveStockCommand"/> from the orchestrator saga.
+/// Decrements stock for every line item within a single DB transaction (all-or-nothing).
+/// On insufficient stock for any item: rolls back and publishes <see cref="StockReservationFailedEvent"/>.
+/// On success: commits and publishes <see cref="StockReservedEvent"/>.
+/// </summary>
 public class ReserveStockConsumer : IConsumer<ReserveStockCommand>
 {
     private readonly ProductContext _context;

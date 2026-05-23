@@ -7,6 +7,19 @@ using Product.API.Models;
 
 namespace Product.API.Controllers
 {
+    /// <summary>
+    /// CRUD controller for the product catalogue.
+    /// Route: /api/v1/products
+    /// <list type="bullet">
+    ///   <item>GET /          — list all active products (anonymous).</item>
+    ///   <item>GET /{id}      — single product by id (anonymous).</item>
+    ///   <item>POST /         — create product (Admin role).</item>
+    ///   <item>PUT /{id}      — full update (Admin role).</item>
+    ///   <item>DELETE /{id}   — soft-delete by setting IsActive=false (Admin role).</item>
+    ///   <item>PUT /{id}/stock — delta stock adjustment used by the saga compensation path (anonymous; gateway-level auth).</item>
+    ///   <item>GET /category/{category} — filter by category (anonymous).</item>
+    /// </list>
+    /// </summary>
     [ApiVersion("1.0")]
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]

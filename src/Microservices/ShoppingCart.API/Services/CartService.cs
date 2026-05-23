@@ -4,6 +4,19 @@ using ShoppingCart.API.Models;
 
 namespace ShoppingCart.API.Services
 {
+    /// <summary>
+    /// Shopping cart service backed by CartDb (PostgreSQL).
+    /// <list type="bullet">
+    ///   <item>GetCartAsync       — returns or creates the cart for a user.</item>
+    ///   <item>AddToCartAsync     — looks up product info from Product.API, then adds or merges a line item.</item>
+    ///   <item>UpdateCartItemAsync — sets quantity; removes item if quantity ≤ 0.</item>
+    ///   <item>RemoveFromCartAsync — removes a single line item.</item>
+    ///   <item>ClearCartAsync     — empties all items (called by FulfillOrderConsumer after order commit).</item>
+    /// </list>
+    /// Private helpers:
+    ///   UpdateCartTotalAsync — recalculates Cart.Price from line items.
+    ///   GetProductInfoAsync  — HTTP GET to Product.API for name/price/image.
+    /// </summary>
     public interface ICartService
     {
         Task<Cart> GetCartAsync(Guid userId);

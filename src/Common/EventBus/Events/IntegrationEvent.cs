@@ -1,5 +1,8 @@
 namespace EventBus.Events
 {
+    /// <summary>
+    /// Base class for all integration events published across service boundaries.
+    /// </summary>
     public abstract class IntegrationEvent
     {
         public Guid Id { get; set; }

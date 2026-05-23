@@ -1,3 +1,8 @@
+/**
+ * ServiceCard.jsx — Health-status card for a single microservice.
+ * Props: name (service name), port (exposed local port), status ('healthy' | 'unhealthy' | 'offline' | 'checking').
+ * Helpers: getStatusColor, getStatusIcon, getStatusText — map status string to visual indicators.
+ */
 import './ServiceCard.css'
 
 function ServiceCard({ name, port, status }) {

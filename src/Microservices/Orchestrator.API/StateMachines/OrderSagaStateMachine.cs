@@ -4,6 +4,26 @@ using System.Text.Json;
 
 namespace Orchestrator.API.StateMachines;
 
+/// <summary>
+/// MassTransit saga that orchestrates the order placement workflow.
+///
+/// States: Initial → Submitted → FulfillingOrder → Completed | Failed.
+///
+/// Flow:
+/// 1. OrderPlacedCommand received — persists routing data, publishes ReserveStockCommand
+///    and (if coupon present) ValidateCouponCommand in parallel, transitions to Submitted.
+/// 2. In Submitted — waits for both StockReservedEvent and CouponValidatedEvent.
+///    Once both flags are true, publishes FulfillOrderCommand → FulfillingOrder.
+///    On any failure, publishes compensating release commands and transitions to Failed.
+/// 3. In FulfillingOrder — waits for OrderFulfilledEvent → Completed,
+///    or OrderFulfillmentFailedEvent → releases stock + coupon → Failed.
+///
+/// SetCompletedWhenFinalized() removes the saga row from the repository after finalization.
+///
+/// Helpers:
+///   BuildFulfillCommand — assembles FulfillOrderCommand from saga state.
+///   DeserializeItems    — deserializes the JSON item payload for compensation commands.
+/// </summary>
 public class OrderSagaStateMachine : MassTransitStateMachine<OrderSagaState>
 {
     // ----- States ----- 

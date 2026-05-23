@@ -2,6 +2,11 @@ using EventBus.Events;
 
 namespace Order.API.Events
 {
+    /// <summary>
+    /// Published by FulfillOrderConsumer (via MassTransit outbox) when an order is successfully created.
+    /// Consumed by Payment.API to create an initial Pending payment record.
+    /// OrderItemEvent carries per-line-item details for downstream processing.
+    /// </summary>
     public class OrderCreatedEvent : IntegrationEvent
     {
         public Guid OrderId { get; set; }
