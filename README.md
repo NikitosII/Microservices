@@ -102,13 +102,13 @@ On any failure the saga publishes compensating `ReleaseStockCommand` and/or `Rel
 
 The project includes unit tests across 5 test projects covering controllers, services, models, gateway configuration, and saga state machine behaviour.
 
-| Project | Tests | Covers |
+| Project | Covers |
 |---------|-------|--------|
-| `Product.API.Tests` | 19 | Controller, service, model |
-| `Order.API.Tests` | 36 | Controller (incl. 202 saga start), service |
-| `ShoppingCart.API.Tests` | 27 | Cart controller and service |
-| `Gateway.Tests` | 13 | Ocelot route configuration |
-| `Orchestrator.Tests` | 4 | Saga state machine |
+| `Product.API.Tests` | Controller, service, model |
+| `Order.API.Tests` | Controller (incl. 202 saga start), service |
+| `ShoppingCart.API.Tests` | Cart controller and service |
+| `Gateway.Tests` | Ocelot route configuration |
+| `Orchestrator.Tests` | Saga state machine |
 
 ## Testing the APIs
 
